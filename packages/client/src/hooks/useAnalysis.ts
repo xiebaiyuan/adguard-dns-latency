@@ -16,14 +16,16 @@ function autoRefresh(): Promise<void> {
   const url = localStorage.getItem('adgh_url')
   const user = localStorage.getItem('adgh_user')
   const pass = localStorage.getItem('adgh_pass')
+  const timeHours = localStorage.getItem('adgh_time_hours')
   if (!url || !user || !pass) return Promise.resolve()
 
-  const cfg = {
+  const cfg: Record<string, unknown> = {
     baseUrl: url.replace(/\/$/, ''),
     username: user,
     password: pass,
     rejectUnauthorized: false,
   }
+  if (timeHours) cfg.timeRangeHours = parseInt(timeHours, 10)
 
   return fetch(`${API_BASE}/api/config`, {
     method: 'POST',

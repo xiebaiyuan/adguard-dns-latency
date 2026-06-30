@@ -5,6 +5,7 @@ export interface AdguardConfig {
   username: string
   password: string
   rejectUnauthorized: boolean
+  timeRangeHours?: number // defaults to 24
 }
 
 /** Raw entry from AdGuardHome that includes the time field */
@@ -28,7 +29,6 @@ interface ApiLogEntry {
 
 const PAGE_SIZE = 500
 const MAX_ENTRIES = 100_000
-const ONE_DAY_MS = 24 * 60 * 60 * 1000
 
 /**
  * Fetch query log entries from AdGuardHome using cursor-based pagination.
@@ -42,7 +42,7 @@ export async function fetchQueryLog(config: AdguardConfig): Promise<RawFetchedEn
   const allEntries: RawFetchedEntry[] = []
   let olderThan: string | undefined
   let pages = 0
-  const cutoff = new Date(Date.now() - ONE_DAY_MS)
+  const cutoff = new Date(Date.now() - (config.timeRangeHours ?? 24) * 3_600_000)
 
   while (true) {
     const params = new URLSearchParams({ limit: String(PAGE_SIZE) })

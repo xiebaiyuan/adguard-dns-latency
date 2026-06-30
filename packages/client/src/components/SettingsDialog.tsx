@@ -9,10 +9,20 @@ interface SettingsDialogProps {
   onConfigured: () => void
 }
 
+const TIME_OPTIONS = [
+  { label: '最近 24 小时', value: 24 },
+  { label: '最近 7 天', value: 168 },
+  { label: '最近 30 天', value: 720 },
+]
+
 export function SettingsDialog({ open, onClose, onConfigured }: SettingsDialogProps) {
   const [url, setUrl] = useState(() => localStorage.getItem('adgh_url') ?? '')
   const [user, setUser] = useState(() => localStorage.getItem('adgh_user') ?? '')
   const [pass, setPass] = useState(() => localStorage.getItem('adgh_pass') ?? '')
+  const [timeHours, setTimeHours] = useState(() => {
+    const saved = localStorage.getItem('adgh_time_hours')
+    return saved ? parseInt(saved, 10) : 24
+  })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -27,7 +37,6 @@ export function SettingsDialog({ open, onClose, onConfigured }: SettingsDialogPr
     setSaving(true)
     setError(null)
 
-    // Normalize URL
     let normalizedUrl = url.trim()
     if (!/^https?:\/\//i.test(normalizedUrl)) {
       normalizedUrl = `http://${normalizedUrl}`
@@ -43,16 +52,17 @@ export function SettingsDialog({ open, onClose, onConfigured }: SettingsDialogPr
             username: user,
             password: pass,
             rejectUnauthorized: false,
+            timeRangeHours: timeHours,
           },
         }),
       })
 
       if (!res.ok) throw new Error(`配置失败: ${res.status}`)
 
-      // Save to localStorage for convenience
       localStorage.setItem('adgh_url', url)
       localStorage.setItem('adgh_user', user)
       localStorage.setItem('adgh_pass', pass)
+      localStorage.setItem('adgh_time_hours', String(timeHours))
 
       onConfigured()
       onClose()
@@ -95,13 +105,9 @@ export function SettingsDialog({ open, onClose, onConfigured }: SettingsDialogPr
             <input
               value={url}
               onChange={e => setUrl(e.target.value)}
-              placeholder="https://adguard.192.168.8.97.nip.io"
-              className="w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-              style={{
-                borderColor: 'var(--c-border)',
-                background: 'var(--c-bg)',
-                color: 'var(--c-text)',
-              }}
+              placeholder="http://192.168.8.88"
+              className="w-full rounded-lg border px-3 py-2 text-sm outline-none transition-colors"
+              style={{ borderColor: 'var(--c-border)', background: 'var(--c-bg)', color: 'var(--c-text)' }}
             />
           </div>
           <div>
@@ -111,13 +117,8 @@ export function SettingsDialog({ open, onClose, onConfigured }: SettingsDialogPr
             <input
               value={user}
               onChange={e => setUser(e.target.value)}
-              placeholder="admin"
               className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
-              style={{
-                borderColor: 'var(--c-border)',
-                background: 'var(--c-bg)',
-                color: 'var(--c-text)',
-              }}
+              style={{ borderColor: 'var(--c-border)', background: 'var(--c-bg)', color: 'var(--c-text)' }}
             />
           </div>
           <div>
@@ -128,14 +129,24 @@ export function SettingsDialog({ open, onClose, onConfigured }: SettingsDialogPr
               type="password"
               value={pass}
               onChange={e => setPass(e.target.value)}
-              placeholder="••••••••"
               className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
-              style={{
-                borderColor: 'var(--c-border)',
-                background: 'var(--c-bg)',
-                color: 'var(--c-text)',
-              }}
+              style={{ borderColor: 'var(--c-border)', background: 'var(--c-bg)', color: 'var(--c-text)' }}
             />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium" style={{ color: 'var(--c-text-secondary)' }}>
+              分析时间范围
+            </label>
+            <select
+              value={timeHours}
+              onChange={e => setTimeHours(parseInt(e.target.value, 10))}
+              className="w-full rounded-lg border px-3 py-2 text-sm outline-none"
+              style={{ borderColor: 'var(--c-border)', background: 'var(--c-bg)', color: 'var(--c-text)' }}
+            >
+              {TIME_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
           </div>
 
           {error && (
