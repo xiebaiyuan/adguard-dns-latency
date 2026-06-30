@@ -181,25 +181,37 @@ export function DomainTable({ domains }: DomainTableProps) {
 function ExpandedDetail({ domain }: { domain: string }) {
   const [data, setData] = useState<{ domain: string; entries: Array<{ time: string; type: string; answer: Array<{ type: string; value: string }>; elapsedMs: number; cached: boolean; status: string }>; upstreams: Array<{ upstream: string; count: number; avg: number }> } | null>(null)
   const [loading, setLoading] = useState(false)
+  const [err, setErr] = useState(false)
 
   useEffect(() => {
     setLoading(true)
+    setErr(false)
     fetch(`/api/analysis/domains/${encodeURIComponent(domain)}`)
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error(String(r.status)); return r.json() })
       .then(d => { setData(d); setLoading(false) })
-      .catch(() => setLoading(false))
+      .catch(() => { setLoading(false); setErr(true) })
   }, [domain])
 
   if (loading) return (
     <tr key={`${domain}-detail`}>
       <td colSpan={10} className="border-0 p-0">
-        <div className="animate-pulse px-4 pb-3 pt-1">
+        <div className="animate-pulse px-4 pb-3 pt-1" onClick={e => e.stopPropagation()}>
           <div className="min-h-[120px] rounded-lg p-4" style={{ background: 'var(--c-accent-soft)', border: '1px solid var(--c-border)' }} />
         </div>
       </td>
     </tr>
   )
-  if (!data) return null
+  if (err || !data) return (
+    <tr key={`${domain}-detail`}>
+      <td colSpan={10} className="border-0 p-0">
+        <div className="px-4 pb-3 pt-1">
+          <div className="min-h-[120px] rounded-lg p-4 text-xs" style={{ background: 'var(--c-accent-soft)', border: '1px solid var(--c-border)' }}>
+            <span style={{ color: 'var(--c-text-secondary)' }}>详情加载失败</span>
+          </div>
+        </div>
+      </td>
+    </tr>
+  )
 
   // Collect unique answers across all entries
   const answerMap = new Map<string, { type: string; count: number }>()
@@ -216,24 +228,27 @@ function ExpandedDetail({ domain }: { domain: string }) {
   return (
     <tr key={`${domain}-detail`}>
       <td colSpan={10} className="border-0 p-0">
-        <div className="px-4 pb-3 pt-1">
+        <div className="px-4 pb-3 pt-1" onClick={e => e.stopPropagation()}>
           <div className="rounded-lg p-4 text-xs" style={{ background: 'var(--c-accent-soft)', border: '1px solid var(--c-border)' }}>
             {/* Resolved addresses */}
             {answers.length > 0 && (
               <>
                 <div className="mb-1.5 font-medium" style={{ color: 'var(--c-text-secondary)' }}>解析结果</div>
                 <div className="mb-3 flex flex-wrap gap-1.5">
-                  {answers.map(([key, val]) => (
-                    <span
-                      key={key}
-                      className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-mono"
-                      style={{ background: 'var(--c-bg)', border: '1px solid var(--c-border)' }}
-                    >
-                      <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--c-accent)' }}>{val.type}</span>
-                      <span>{key.split(':')[1]}</span>
-                      <span className="text-[10px]" style={{ color: 'var(--c-text-secondary)' }}>×{val.count}</span>
-                    </span>
-                  ))}
+                  {answers.map(([key, val]) => {
+                    // Handle IPv6: split only on first colon
+                    const colonIdx = key.indexOf(':')
+                    const aType = key.slice(0, colonIdx)
+                    const aValue = key.slice(colonIdx + 1)
+                    return (
+                      <span key={key} className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-mono"
+                        style={{ background: 'var(--c-bg)', border: '1px solid var(--c-border)' }}>
+                        <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--c-accent)' }}>{aType}</span>
+                        <span>{aValue}</span>
+                        <span className="text-[10px]" style={{ color: 'var(--c-text-secondary)' }}>×{val.count}</span>
+                      </span>
+                    )
+                  })}
                 </div>
               </>
             )}
