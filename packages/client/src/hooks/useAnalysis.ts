@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { DomainStats, AnalysisSummary } from '../lib/types'
 
 const API_BASE = ''
@@ -8,8 +8,33 @@ interface UseAnalysisResult {
   error: string | null
   summary: AnalysisSummary | null
   domains: DomainStats[]
-  refresh: () => void
+  refresh: () => Promise<void>
   refreshing: boolean
+}
+
+function autoRefresh(): Promise<void> {
+  const url = localStorage.getItem('adgh_url')
+  const user = localStorage.getItem('adgh_user')
+  const pass = localStorage.getItem('adgh_pass')
+  if (!url || !user || !pass) return Promise.resolve()
+
+  // Restore backend config from localStorage
+  return fetch(`${API_BASE}/api/config`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      adguardConfig: {
+        baseUrl: url.replace(/\/$/, ''),
+        username: user,
+        password: pass,
+        rejectUnauthorized: false,
+      },
+    }),
+  }).then(res => {
+    if (!res.ok) return
+    // Now trigger data refresh
+    return fetch(`${API_BASE}/api/analysis/refresh`, { method: 'POST' }).catch(() => {})
+  }).catch(() => {})
 }
 
 export function useAnalysis(): UseAnalysisResult {
@@ -18,6 +43,7 @@ export function useAnalysis(): UseAnalysisResult {
   const [error, setError] = useState<string | null>(null)
   const [summary, setSummary] = useState<AnalysisSummary | null>(null)
   const [domains, setDomains] = useState<DomainStats[]>([])
+  const autoRefreshed = useRef(false)
 
   const fetchData = useCallback(async () => {
     try {
@@ -34,7 +60,6 @@ export function useAnalysis(): UseAnalysisResult {
       setSummary(s)
       setDomains(await domainsRes.json())
 
-      // Show backend error if present
       if (s.lastError) {
         setError(s.lastError)
       } else {
@@ -48,14 +73,13 @@ export function useAnalysis(): UseAnalysisResult {
     }
   }, [])
 
-  const refresh = useCallback(async () => {
+  const doRefresh = useCallback(async () => {
     setRefreshing(true)
     setError(null)
     try {
       const res = await fetch(`${API_BASE}/api/analysis/refresh`, { method: 'POST' })
       if (!res.ok) throw new Error(`刷新失败: ${res.status}`)
 
-      // Poll summary until ready (or error), max 30s
       for (let i = 0; i < 30; i++) {
         await new Promise(r => setTimeout(r, 1000))
         const sRes = await fetch(`${API_BASE}/api/analysis/summary`)
@@ -75,7 +99,26 @@ export function useAnalysis(): UseAnalysisResult {
     }
   }, [fetchData])
 
-  useEffect(() => { fetchData() }, [fetchData])
+  // Initial load: fetch summary, then auto-restore + refresh if configured
+  useEffect(() => {
+    const init = async () => {
+      await fetchData()
+      if (!autoRefreshed.current && localStorage.getItem('adgh_url')) {
+        autoRefreshed.current = true
+        setLoading(true)
+        await autoRefresh()
+        // Wait for refresh to complete
+        for (let i = 0; i < 30; i++) {
+          await new Promise(r => setTimeout(r, 1000))
+          const sRes = await fetch(`${API_BASE}/api/analysis/summary`)
+          const s = await sRes.json() as AnalysisSummary
+          if (s.ready || s.lastError) break
+        }
+        await fetchData()
+      }
+    }
+    init()
+  }, [fetchData])
 
-  return { loading, error, summary, domains, refresh, refreshing }
+  return { loading, error, summary, domains, refresh: doRefresh, refreshing }
 }

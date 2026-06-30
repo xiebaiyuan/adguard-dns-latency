@@ -149,9 +149,38 @@ export function buildApp(opts?: AppOptions): FastifyInstance {
     }
   })
 
+  // Debug: check raw cached field in first few entries
+  app.get('/api/debug/cache-check', async () => {
+    const samples: Array<{ domain: string; cached: boolean; cachedType: string; elapsedMs: number }> = []
+    for (const [domain, entries] of cache.rawEntriesByDomain) {
+      for (let i = 0; i < Math.min(3, entries.length); i++) {
+        samples.push({
+          domain,
+          cached: entries[i].cached,
+          cachedType: typeof entries[i].cached,
+          elapsedMs: entries[i].elapsedMs,
+        })
+      }
+      if (samples.length >= 20) break
+    }
+    return {
+      totalDomains: cache.rawEntriesByDomain.size,
+      totalEntries: Array.from(cache.rawEntriesByDomain.values()).reduce((s, e) => s + e.length, 0),
+      sampleCount: samples.length,
+      samples,
+    }
+  })
+
   // Configure AdGuardHome connection
   app.post<{ Body: { adguardConfig: AdguardConfig } }>('/api/config', async (request, reply) => {
     const newConfig = request.body.adguardConfig
+
+    // Normalize URL: add http:// if no protocol specified
+    let url = newConfig.baseUrl
+    if (!/^https?:\/\//i.test(url)) {
+      url = `http://${url}`
+    }
+    newConfig.baseUrl = url
 
     // 切换后端时清除旧缓存
     if (adguardConfig?.baseUrl !== newConfig.baseUrl) {

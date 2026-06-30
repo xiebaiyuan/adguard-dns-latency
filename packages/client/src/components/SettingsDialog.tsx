@@ -27,13 +27,19 @@ export function SettingsDialog({ open, onClose, onConfigured }: SettingsDialogPr
     setSaving(true)
     setError(null)
 
+    // Normalize URL
+    let normalizedUrl = url.trim()
+    if (!/^https?:\/\//i.test(normalizedUrl)) {
+      normalizedUrl = `http://${normalizedUrl}`
+    }
+
     try {
       const res = await fetch(`${API_BASE}/api/config`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           adguardConfig: {
-            baseUrl: url.replace(/\/$/, ''),
+            baseUrl: normalizedUrl.replace(/\/$/, ''),
             username: user,
             password: pass,
             rejectUnauthorized: false,
