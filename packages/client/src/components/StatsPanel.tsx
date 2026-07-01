@@ -114,7 +114,7 @@ export function StatsPanel({ onRefreshNeeded }: { onRefreshNeeded: () => void })
         <span className="text-sm font-medium" style={{ color: 'var(--c-text)' }}>实时统计</span>
         <span className="rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider"
           style={{ background: 'var(--c-accent-soft)', color: 'var(--c-accent)' }}>
-          AdGuardHome 累计
+          {stats.timeSpan.count} {stats.timeSpan.unit === 'days' ? '天' : stats.timeSpan.unit}
         </span>
       </div>
 

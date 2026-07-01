@@ -27,6 +27,7 @@ export interface StatsResult {
   topBlockedDomains: Array<{ domain: string; count: number }>
   topUpstreams: Array<{ upstream: string; count: number; avgTime: number }>
   history: Array<{ queries: number; blocked: number }>
+  timeSpan: { count: number; unit: string }
 }
 
 const PAGE_SIZE = 500
@@ -86,5 +87,9 @@ export async function fetchStats(config: AdguardConfig): Promise<StatsResult> {
       queries,
       blocked: raw.blocked_filtering[i] ?? 0,
     })),
+    timeSpan: {
+      count: raw.dns_queries.length,
+      unit: raw.time_units || 'days',
+    },
   }
 }

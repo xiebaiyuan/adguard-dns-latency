@@ -42,4 +42,5 @@ export interface AdguardStats {
   topBlockedDomains: Array<{ domain: string; count: number }>
   topUpstreams: Array<{ upstream: string; count: number; avgTime: number }>
   history: Array<{ queries: number; blocked: number }>
+  timeSpan: { count: number; unit: string }
 }
