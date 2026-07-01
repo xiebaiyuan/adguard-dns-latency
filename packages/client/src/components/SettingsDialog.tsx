@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Gear, X, Trash } from '@phosphor-icons/react'
+import { TIME_OPTIONS } from '../lib/format'
 
 const API_BASE = ''
 
@@ -16,12 +17,6 @@ interface SettingsDialogProps {
   onClose: () => void
   onConfigured: () => void
 }
-
-const TIME_OPTIONS = [
-  { label: '最近 24 小时', value: 24 },
-  { label: '最近 7 天', value: 168 },
-  { label: '最近 30 天', value: 720 },
-]
 
 function loadProfiles(): Profile[] {
   try {
@@ -103,14 +98,12 @@ export function SettingsDialog({ open, onClose, onConfigured }: SettingsDialogPr
 
       if (!res.ok) throw new Error(`配置失败: ${res.status}`)
 
-      // Save to localStorage
       localStorage.setItem('adgh_url', url)
       localStorage.setItem('adgh_user', user)
       localStorage.setItem('adgh_pass', pass)
       localStorage.setItem('adgh_time_hours', String(timeHours))
       localStorage.setItem('adgh_profile_name', name.trim())
 
-      // Save/update profile list
       const newProfile: Profile = {
         name: name.trim(),
         url,
@@ -158,7 +151,6 @@ export function SettingsDialog({ open, onClose, onConfigured }: SettingsDialogPr
         </div>
 
         <div className="space-y-3.5">
-          {/* Profile selector */}
           {profiles.length > 0 && (
             <div>
               <label className="mb-1 block text-xs font-medium" style={{ color: 'var(--c-text-secondary)' }}>

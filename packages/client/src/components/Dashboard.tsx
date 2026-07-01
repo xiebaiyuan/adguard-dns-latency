@@ -9,6 +9,12 @@ import { KpiSkeleton, ChartSkeleton, TableSkeleton } from './Skeleton'
 import { SettingsDialog } from './SettingsDialog'
 import { exportCsv } from '../lib/csv'
 import { buildPrompt, copyToClipboard } from '../lib/prompt'
+import { TIME_OPTIONS } from '../lib/format'
+
+function getPanelVisible(key: string, def: boolean): boolean {
+  const stored = localStorage.getItem(key)
+  return stored !== null ? stored === 'true' : def
+}
 
 export function Dashboard() {
   const { loading, error, summary, domains, refresh, refreshing } = useAnalysis()
@@ -18,19 +24,10 @@ export function Dashboard() {
   autoRef.current = autoRefresh
 
   // Panel visibility from localStorage
-  const getPanelVisible = (key: string, def: boolean): boolean => {
-    const stored = localStorage.getItem(key)
-    return stored !== null ? stored === 'true' : def
-  }
   const [showStatsPanel, setShowStatsPanel] = useState(() => getPanelVisible('panel_stats', true))
   const [showTimePicker, setShowTimePicker] = useState(false)
   const timePickerRef = useRef<HTMLDivElement | null>(null)
 
-  const TIME_OPTIONS = [
-    { label: '最近 24h', value: 24 },
-    { label: '最近 7 天', value: 168 },
-    { label: '最近 30 天', value: 720 },
-  ]
   const currentTimeHours = parseInt(localStorage.getItem('adgh_time_hours') ?? '24', 10)
 
   useEffect(() => {

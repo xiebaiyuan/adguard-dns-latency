@@ -20,6 +20,12 @@ export function fmtCount(n: number): string {
 
 export type SortKey = 'domain' | 'p95' | 'p50' | 'cacheHitRate' | 'slowRate' | 'totalCount'
 
+export const TIME_OPTIONS = [
+  { label: '最近 24h', value: 24 },
+  { label: '最近 7 天', value: 168 },
+  { label: '最近 30 天', value: 720 },
+] as const
+
 export function filterAndSortDomains(
   domains: DomainStats[],
   search: string,

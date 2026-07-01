@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { fmtMs, fmtPct, fmtCount, fmtPreciseMs, filterAndSortDomains } from './format'
+import { fmtMs, fmtPct, fmtCount, fmtPreciseMs, TIME_OPTIONS, filterAndSortDomains } from './format'
 import type { DomainStats } from './types'
 
 describe('fmtMs', () => {
@@ -23,6 +23,15 @@ describe('fmtPreciseMs', () => {
     expect(fmtPreciseMs(6.598)).toBe('6.6ms')
     expect(fmtPreciseMs(123.45)).toBe('123.5ms')
     expect(fmtPreciseMs(0)).toBe('0µs')
+  })
+})
+
+describe('TIME_OPTIONS', () => {
+  it('should have correct time options', () => {
+    expect(TIME_OPTIONS).toHaveLength(3)
+    expect(TIME_OPTIONS[0]).toEqual({ label: '最近 24h', value: 24 })
+    expect(TIME_OPTIONS[1]).toEqual({ label: '最近 7 天', value: 168 })
+    expect(TIME_OPTIONS[2]).toEqual({ label: '最近 30 天', value: 720 })
   })
 })
 
