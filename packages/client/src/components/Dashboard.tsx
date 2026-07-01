@@ -35,6 +35,44 @@ export function Dashboard() {
 
   const currentTimeHours = parseInt(localStorage.getItem('adgh_time_hours') ?? '24', 10)
 
+  // 整体聚合统计 — useMemo 避免每次渲染重新计算
+  const aggregateStats = useMemo(() => {
+    const totalCount = domains.reduce((s, d) => s + d.totalCount, 0)
+    const totalCached = domains.reduce((s, d) => s + d.cachedCount, 0)
+    const overallCacheRate = totalCount > 0 ? totalCached / totalCount : 0
+
+    const allUncached = domains.map(d => d.uncached)
+    const allAll = domains.map(d => d.all)
+
+    const computeOverall = (latencies: typeof allUncached) => {
+      if (latencies.length === 0) return null
+      const totalC = latencies.reduce((s, l) => s + l.count, 0)
+      const slowC = latencies.reduce((s, l) => s + l.slowRate * l.count, 0)
+      const severeC = latencies.reduce((s, l) => s + l.severeRate * l.count, 0)
+      const p50s = [...latencies].sort((a, b) => a.p50 - b.p50)
+      const p95s = [...latencies].sort((a, b) => a.p95 - b.p95)
+      return {
+        count: totalC,
+        min: Math.min(...latencies.map(l => l.min)),
+        max: Math.max(...latencies.map(l => l.max)),
+        avg: latencies.reduce((s, l) => s + l.avg * l.count, 0) / totalC,
+        p20: 0, p50: p50s[Math.floor(p50s.length / 2)]?.p50 ?? 0,
+        p80: 0, p95: p95s[Math.floor(p95s.length * 0.95)]?.p95 ?? 0,
+        p99: 0,
+        slowRate: totalC > 0 ? slowC / totalC : 0,
+        severeRate: totalC > 0 ? severeC / totalC : 0,
+      }
+    }
+
+    return {
+      totalCount,
+      totalCached,
+      overallCacheRate,
+      overallUncached: computeOverall(allUncached),
+      overallAll: computeOverall(allAll),
+    }
+  }, [domains])
+
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       if (timePickerRef.current && !timePickerRef.current.contains(e.target as Node)) {
@@ -90,50 +128,6 @@ export function Dashboard() {
       if (timer) clearTimeout(timer)
     }
   }, [autoRefresh, refreshing, summary?.ready, refresh])
-
-  const totalCount = domains.reduce((s, d) => s + d.totalCount, 0)
-  const totalCached = domains.reduce((s, d) => s + d.cachedCount, 0)
-  const overallCacheRate = totalCount > 0 ? totalCached / totalCount : 0
-
-  const allUncached = domains.map(d => d.uncached)
-  const allAll = domains.map(d => d.all)
-  const overallUncached = allUncached.length > 0 ? (() => {
-    const totalC = allUncached.reduce((s, l) => s + l.count, 0)
-    const slowC = allUncached.reduce((s, l) => s + l.slowRate * l.count, 0)
-    const severeC = allUncached.reduce((s, l) => s + l.severeRate * l.count, 0)
-    const p50s = [...allUncached].sort((a, b) => a.p50 - b.p50)
-    const p95s = [...allUncached].sort((a, b) => a.p95 - b.p95)
-    return {
-      count: totalC,
-      min: Math.min(...allUncached.map(l => l.min)),
-      max: Math.max(...allUncached.map(l => l.max)),
-      avg: allUncached.reduce((s, l) => s + l.avg * l.count, 0) / totalC,
-      p20: 0, p50: p50s[Math.floor(p50s.length / 2)]?.p50 ?? 0,
-      p80: 0, p95: p95s[Math.floor(p95s.length * 0.95)]?.p95 ?? 0,
-      p99: 0,
-      slowRate: totalC > 0 ? slowC / totalC : 0,
-      severeRate: totalC > 0 ? severeC / totalC : 0,
-    }
-  })() : null
-
-  const overallAll = allAll.length > 0 ? (() => {
-    const totalC = allAll.reduce((s, l) => s + l.count, 0)
-    const slowC = allAll.reduce((s, l) => s + l.slowRate * l.count, 0)
-    const severeC = allAll.reduce((s, l) => s + l.severeRate * l.count, 0)
-    const p50s = [...allAll].sort((a, b) => a.p50 - b.p50)
-    const p95s = [...allAll].sort((a, b) => a.p95 - b.p95)
-    return {
-      count: totalC,
-      min: Math.min(...allAll.map(l => l.min)),
-      max: Math.max(...allAll.map(l => l.max)),
-      avg: allAll.reduce((s, l) => s + l.avg * l.count, 0) / totalC,
-      p20: 0, p50: p50s[Math.floor(p50s.length / 2)]?.p50 ?? 0,
-      p80: 0, p95: p95s[Math.floor(p95s.length * 0.95)]?.p95 ?? 0,
-      p99: 0,
-      slowRate: totalC > 0 ? slowC / totalC : 0,
-      severeRate: totalC > 0 ? severeC / totalC : 0,
-    }
-  })() : null
 
   // Aggregate query type distribution across all domains
   const queryTypeDistribution = useMemo(() => {
@@ -356,10 +350,10 @@ export function Dashboard() {
           </div>
         ) : (
           <KpiCards
-            totalQueries={totalCount}
-            cacheHitRate={overallCacheRate}
-            uncached={overallUncached}
-            all={overallAll}
+            totalQueries={aggregateStats.totalCount}
+            cacheHitRate={aggregateStats.overallCacheRate}
+            uncached={aggregateStats.overallUncached}
+            all={aggregateStats.overallAll}
           />
         )}
       </div>

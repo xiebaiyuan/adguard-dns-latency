@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import type { DomainStats } from '../lib/types'
 
@@ -9,19 +10,25 @@ interface Bin {
 // Use a fixed histogram assumption based on overall P50/P95 spread
 function computeHistogram(domains: DomainStats[]): Bin[] {
   if (!domains.length) return []
-  const allLatencies = domains.flatMap(d => [d.uncached.p50, d.uncached.p95, d.uncached.max])
-  const maxLat = Math.max(...allLatencies, 1)
-  const thresholds = [10, 50, 200, 500, 1000, maxLat + 1]
-  const labels = ['<10ms', '10-50', '50-200', '200-500', '500-1s', '>1s']
 
-  // Approximate: distribute domains into bins based on their P95
-  return labels.map((range, i) => ({
-    range,
-    count: domains.filter(d => {
-      const p95 = d.uncached.p95
-      return p95 >= (thresholds[i - 1] ?? 0) && p95 < thresholds[i]
-    }).length,
-  }))
+  // 单次遍历：根据 P95 看落在哪个区间，直接计数
+  const thresholds = [10, 50, 200, 500, 1000]
+  const labels = ['<10ms', '10-50', '50-200', '200-500', '500-1s', '>1s']
+  const counts = new Array(labels.length).fill(0)
+
+  for (const d of domains) {
+    const p95 = d.uncached.p95
+    let bin = thresholds.length // 默认 >1s
+    for (let t = 0; t < thresholds.length; t++) {
+      if (p95 < thresholds[t]) {
+        bin = t
+        break
+      }
+    }
+    counts[bin]++
+  }
+
+  return labels.map((range, i) => ({ range, count: counts[i] }))
 }
 
 const GRADIENT_COLORS = [
@@ -53,7 +60,7 @@ interface LatencyChartProps {
 }
 
 export function LatencyChart({ domains }: LatencyChartProps) {
-  const data = computeHistogram(domains)
+  const data = useMemo(() => computeHistogram(domains), [domains])
 
   if (!domains.length) {
     return (

@@ -80,8 +80,10 @@ export function useAnalysis(): UseAnalysisResult {
       const res = await fetch(`${API_BASE}/api/analysis/refresh`, { method: 'POST' })
       if (!res.ok) throw new Error(`刷新失败: ${res.status}`)
 
-      for (let i = 0; i < 30; i++) {
-        await new Promise(r => setTimeout(r, 1000))
+      // 指数退避轮询：1s → 2s → 2s → 2s, 最多 15 次尝试（取代 30 次固定间隔）
+      for (let i = 0, wait = 1000; i < 15; i++) {
+        await new Promise(r => setTimeout(r, wait))
+        wait = i === 0 ? 2000 : wait  // 首次后降频
         const sRes = await fetch(`${API_BASE}/api/analysis/summary`)
         const s = await sRes.json() as AnalysisSummary
         if (s.lastError) {
@@ -107,9 +109,10 @@ export function useAnalysis(): UseAnalysisResult {
         autoRefreshed.current = true
         setLoading(true)
         await autoRefresh()
-        // Wait for refresh to complete
-        for (let i = 0; i < 30; i++) {
-          await new Promise(r => setTimeout(r, 1000))
+        // Wait for refresh to complete with exponential backoff
+        for (let i = 0, wait = 1000; i < 15; i++) {
+          await new Promise(r => setTimeout(r, wait))
+          wait = i === 0 ? 2000 : wait
           const sRes = await fetch(`${API_BASE}/api/analysis/summary`)
           const s = await sRes.json() as AnalysisSummary
           if (s.ready || s.lastError) break

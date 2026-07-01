@@ -23,31 +23,32 @@ export function analyze(entries: QueryLogEntry[]): AnalysisResult {
 
 function computeDomainStats(domain: string, entries: QueryLogEntry[]): DomainStats {
   const totalCount = entries.length
-  const cachedEntries = entries.filter(e => e.cached)
-  const cachedCount = cachedEntries.length
-  const uncachedEntries = entries.filter(e => !e.cached)
+  const uncachedLatencies: number[] = []
+  const allLatencies: number[] = []
+  const queryTypes: Record<string, number> = {}
+  let cachedCount = 0
 
-  const uncachedLatencies = uncachedEntries.map(e => e.elapsedMs)
-  const allLatencies = entries.map(e => e.elapsedMs)
+  // 单次遍历：同时收集缓存统计、延时列表、查询类型分布
+  for (const e of entries) {
+    allLatencies.push(e.elapsedMs)
+    if (e.cached) {
+      cachedCount++
+    } else {
+      uncachedLatencies.push(e.elapsedMs)
+    }
+    const t = e.question.type
+    queryTypes[t] = (queryTypes[t] ?? 0) + 1
+  }
 
   return {
     domain,
     totalCount,
     cachedCount,
     cacheHitRate: totalCount > 0 ? cachedCount / totalCount : 0,
-    queryTypes: computeQueryTypes(entries),
+    queryTypes,
     uncached: computeLatencyStats(uncachedLatencies),
     all: computeLatencyStats(allLatencies),
   }
-}
-
-function computeQueryTypes(entries: QueryLogEntry[]): Record<string, number> {
-  const types: Record<string, number> = {}
-  for (const e of entries) {
-    const t = e.question.type
-    types[t] = (types[t] ?? 0) + 1
-  }
-  return types
 }
 
 function computeLatencyStats(latencies: number[]): LatencyStats {
@@ -57,9 +58,20 @@ function computeLatencyStats(latencies: number[]): LatencyStats {
   }
 
   const sorted = [...latencies].sort((a, b) => a - b)
-  const sum = sorted.reduce((a, b) => a + b, 0)
-  const slowCount = sorted.filter(l => l > 500).length
-  const severeCount = sorted.filter(l => l > 1000).length
+
+  // 单次遍历：同时计算 sum、slowCount、severeCount
+  let sum = 0
+  let slowCount = 0
+  let severeCount = 0
+  for (const v of sorted) {
+    sum += v
+    if (v > 1000) {
+      severeCount++
+      slowCount++
+    } else if (v > 500) {
+      slowCount++
+    }
+  }
 
   return {
     count: n,

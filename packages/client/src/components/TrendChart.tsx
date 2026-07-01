@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts'
 
 interface TrendChartProps {
@@ -9,6 +10,7 @@ export function TrendChart({ history, timeUnit }: TrendChartProps) {
   if (!history || history.length === 0) return null
 
   const unitLabel = timeUnit === 'days' ? '天' : timeUnit
+  const chartData = useMemo(() => history.map((h, i) => ({ ...h, index: i })), [history])
 
   return (
     <div className="glass-card rounded-xl p-4 sm:p-6">
@@ -21,7 +23,7 @@ export function TrendChart({ history, timeUnit }: TrendChartProps) {
       </div>
       <div className="h-48">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={history.map((h, i) => ({ ...h, index: i }))}>
+          <AreaChart data={chartData}>
             <defs>
               <linearGradient id="queriesGrad" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="var(--c-accent)" stopOpacity={0.3} />
