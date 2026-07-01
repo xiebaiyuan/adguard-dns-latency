@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Trash, Plus, X } from '@phosphor-icons/react'
+import { Trash, Plus, X, PencilSimple } from '@phosphor-icons/react'
 import { useAdguard } from '../hooks/useAdguard'
 
 interface ManagementDialogProps {
@@ -12,7 +12,8 @@ export function ManagementDialog({ open, onClose }: ManagementDialogProps) {
     status, loading, error, saving, rewrites,
     toggleSafebrowsing, toggleParental,
     setUserRules, addRewrite, deleteRewrite,
-    addFilterUrl,
+    addFilterUrl, removeFilterUrl,
+    setFilterEnabled, updateFilterUrl,
     resetStats, clearLog,
   } = useAdguard()
 
@@ -41,6 +42,9 @@ export function ManagementDialog({ open, onClose }: ManagementDialogProps) {
   const [rewriteAnswer, setRewriteAnswer] = useState('')
   const [filterUrl, setFilterUrl] = useState('')
   const [filterName, setFilterName] = useState('')
+  const [editingFilter, setEditingFilter] = useState<string | null>(null)
+  const [editName, setEditName] = useState('')
+  const [editUrl, setEditUrl] = useState('')
 
   if (!open) return null
 
@@ -125,17 +129,68 @@ export function ManagementDialog({ open, onClose }: ManagementDialogProps) {
               </Section>
 
               {status.filters.length > 0 && (
-                <Section title="过滤器">
+                <Section title="过滤器（点击开关启/停，点击编辑修改 URL）">
                   {status.filters.map(f => (
-                    <div key={f.name} className="flex items-center gap-2 rounded-lg border px-3 py-2 text-xs" style={{ borderColor: 'var(--c-border)' }}>
-                      <span className="h-1.5 w-1.5 shrink-0 rounded-full"
-                        style={{ background: f.enabled ? 'var(--c-success)' : 'var(--c-text-secondary)' }} />
-                      <span className="flex-1 truncate">{f.name}</span>
-                      {f.rulesCount != null && (
-                        <span className="shrink-0 text-[11px]" style={{ color: 'var(--c-text-secondary)' }}>{f.rulesCount} 条</span>
-                      )}
-                      {!f.enabled && (
-                        <span className="shrink-0 text-[11px]" style={{ color: 'var(--c-text-secondary)' }}>已禁用</span>
+                    <div key={f.name}>
+                      {editingFilter === f.url ? (
+                        <div className="mb-2 rounded-lg border p-2 text-xs" style={{ borderColor: 'var(--c-accent)' }}>
+                          <input value={editName} onChange={e => setEditName(e.target.value)}
+                            className="mb-1 w-full rounded border px-2 py-1 outline-none"
+                            style={{ borderColor: 'var(--c-border)', background: 'var(--c-bg)', color: 'var(--c-text)' }}
+                          />
+                          <input value={editUrl} onChange={e => setEditUrl(e.target.value)}
+                            className="mb-1 w-full rounded border px-2 py-1 outline-none"
+                            style={{ borderColor: 'var(--c-border)', background: 'var(--c-bg)', color: 'var(--c-text)' }}
+                          />
+                          <div className="flex gap-1">
+                            <button onClick={async () => {
+                              if (f.url) { await updateFilterUrl(f.url, editUrl, editName); setEditingFilter(null) }
+                            }} disabled={saving === 'filter'}
+                              className="cursor-pointer rounded px-2 py-1 text-white"
+                              style={{ background: 'var(--c-accent)' }}>保存</button>
+                            <button onClick={() => setEditingFilter(null)}
+                              className="cursor-pointer rounded px-2 py-1"
+                              style={{ color: 'var(--c-text-secondary)' }}>取消</button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 rounded-lg border px-3 py-2 text-xs" style={{ borderColor: 'var(--c-border)' }}>
+                          <button
+                            onClick={async () => { if (f.url) await setFilterEnabled(f.url, f.name, !f.enabled) }}
+                            disabled={saving === 'filter'}
+                            className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer items-center rounded-full transition-colors ${saving === 'filter' ? 'opacity-60' : ''}`}
+                            style={{ background: f.enabled ? 'var(--c-success)' : 'var(--c-border)' }}
+                          >
+                            <span className="inline-block h-2.5 w-2.5 rounded-full bg-white transition-transform"
+                              style={{ transform: f.enabled ? 'translateX(14px)' : 'translateX(2px)' }} />
+                          </button>
+                          <span className="flex-1 truncate">{f.name}</span>
+                          {f.rulesCount != null && (
+                            <span className="shrink-0 text-[11px]" style={{ color: 'var(--c-text-secondary)' }}>{f.rulesCount} 条</span>
+                          )}
+                          {!f.enabled && (
+                            <span className="shrink-0 text-[11px]" style={{ color: 'var(--c-text-secondary)' }}>已禁用</span>
+                          )}
+                          <button onClick={() => {
+                            if (!f.url) return
+                            setEditingFilter(f.url)
+                            setEditName(f.name)
+                            setEditUrl(f.url)
+                          }}
+                            className="flex shrink-0 cursor-pointer p-1 transition-colors hover:opacity-60"
+                            style={{ color: 'var(--c-text-secondary)' }}
+                          >
+                            <PencilSimple size={12} />
+                          </button>
+                          {f.url && (
+                            <button onClick={() => removeFilterUrl(f.url!)}
+                              className="flex shrink-0 cursor-pointer p-1 transition-colors hover:opacity-60"
+                              style={{ color: 'var(--c-danger)' }}
+                            >
+                              <Trash size={12} />
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                   ))}

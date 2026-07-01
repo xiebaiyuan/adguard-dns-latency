@@ -139,6 +139,22 @@ export function useAdguard() {
     } finally { setSaving(null) }
   }, [refresh])
 
+  const setFilterEnabled = useCallback(async (url: string, name: string, enabled: boolean) => {
+    setSaving('filter')
+    try {
+      await adguardPost('filtering/set_url', { name, url, enabled, whitelist: false })
+      await refresh()
+    } finally { setSaving(null) }
+  }, [refresh])
+
+  const updateFilterUrl = useCallback(async (oldUrl: string, newUrl: string, name: string) => {
+    setSaving('filter')
+    try {
+      await adguardPost('filtering/set_url', { url: oldUrl, name, new_url: newUrl, whitelist: false })
+      await refresh()
+    } finally { setSaving(null) }
+  }, [refresh])
+
   const addRewrite = useCallback(async (domain: string, answer: string) => {
     await adguardPost('rewrite/add', { domain, answer })
     await refresh()
@@ -168,7 +184,7 @@ export function useAdguard() {
     toggleProtection, clearCache,
     toggleSafebrowsing, toggleParental,
     setUserRules, addRewrite, deleteRewrite,
-    addFilterUrl, removeFilterUrl,
+    addFilterUrl, removeFilterUrl, setFilterEnabled, updateFilterUrl,
     resetStats, clearLog,
   }
 }
