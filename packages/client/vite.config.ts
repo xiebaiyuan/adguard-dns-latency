@@ -12,4 +12,15 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id: string) {
+          if (id.includes('recharts')) return 'vendor-charts'
+          if (id.includes('phosphor-icons')) return 'vendor-icons'
+          if (id.includes('node_modules')) return 'vendor'
+        },
+      },
+    },
+  },
 })
