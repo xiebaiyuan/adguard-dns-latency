@@ -7,6 +7,8 @@ export interface LatencyStats {
   avg: number
   p20: number
   p50: number
+  p60: number
+  p70: number
   p80: number
   p95: number
   p99: number

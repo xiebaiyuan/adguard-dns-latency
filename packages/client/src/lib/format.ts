@@ -18,7 +18,7 @@ export function fmtCount(n: number): string {
   return n.toLocaleString()
 }
 
-export type SortKey = 'domain' | 'p95' | 'p50' | 'cacheHitRate' | 'slowRate' | 'totalCount'
+export type SortKey = 'domain' | 'p95' | 'p60' | 'p70' | 'p50' | 'cacheHitRate' | 'slowRate' | 'totalCount'
 
 export const TIME_OPTIONS = [
   { label: '最近 24h', value: 24 },
@@ -42,6 +42,8 @@ export function filterAndSortDomains(
     switch (sortKey) {
       case 'domain': va = a.domain; vb = b.domain; break
       case 'p95': va = a.uncached.p95; vb = b.uncached.p95; break
+      case 'p60': va = a.uncached.p60; vb = b.uncached.p60; break
+      case 'p70': va = a.uncached.p70; vb = b.uncached.p70; break
       case 'p50': va = a.uncached.p50; vb = b.uncached.p50; break
       case 'cacheHitRate': va = a.cacheHitRate; vb = b.cacheHitRate; break
       case 'slowRate': va = a.uncached.slowRate; vb = b.uncached.slowRate; break

@@ -54,7 +54,7 @@ function computeDomainStats(domain: string, entries: QueryLogEntry[]): DomainSta
 function computeLatencyStats(latencies: number[]): LatencyStats {
   const n = latencies.length
   if (n === 0) {
-    return { count: 0, min: 0, max: 0, avg: 0, p20: 0, p50: 0, p80: 0, p95: 0, p99: 0, slowRate: 0, severeRate: 0 }
+    return { count: 0, min: 0, max: 0, avg: 0, p20: 0, p50: 0, p60: 0, p70: 0, p80: 0, p95: 0, p99: 0, slowRate: 0, severeRate: 0 }
   }
 
   const sorted = [...latencies].sort((a, b) => a - b)
@@ -80,6 +80,8 @@ function computeLatencyStats(latencies: number[]): LatencyStats {
     avg: sum / n,
     p20: percentile(sorted, 20),
     p50: percentile(sorted, 50),
+    p60: percentile(sorted, 60),
+    p70: percentile(sorted, 70),
     p80: percentile(sorted, 80),
     p95: percentile(sorted, 95),
     p99: percentile(sorted, 99),

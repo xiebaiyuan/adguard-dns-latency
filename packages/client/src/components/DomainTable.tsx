@@ -26,7 +26,7 @@ export function DomainTable({ domains }: DomainTableProps) {
       setSortDesc(!sortDesc)
     } else {
       setSortKey(key)
-      setSortDesc(key === 'p95' || key === 'slowRate' || key === 'totalCount')
+      setSortDesc(key === 'p95' || key === 'p60' || key === 'p70' || key === 'slowRate' || key === 'totalCount')
     }
   }
 
@@ -117,6 +117,12 @@ export function DomainTable({ domains }: DomainTableProps) {
               <th className={headerCell} onClick={() => toggleSort('p50')}>
                 <span className="inline-flex items-center gap-1">P50 {sortArrow('p50')}</span>
               </th>
+              <th className={headerCell} onClick={() => toggleSort('p60')}>
+                <span className="inline-flex items-center gap-1">P60 {sortArrow('p60')}</span>
+              </th>
+              <th className={headerCell} onClick={() => toggleSort('p70')}>
+                <span className="inline-flex items-center gap-1">P70 {sortArrow('p70')}</span>
+              </th>
               <th className={headerCell} onClick={() => toggleSort('p95')}>
                 <span className="inline-flex items-center gap-1">P95 {sortArrow('p95')}</span>
               </th>
@@ -143,7 +149,7 @@ export function DomainTable({ domains }: DomainTableProps) {
             ))}
             {sorted.length === 0 && (
               <tr>
-                <td colSpan={10} className="py-12 text-center text-xs" style={{ color: 'var(--c-text-secondary)' }}>
+                <td colSpan={12} className="py-12 text-center text-xs" style={{ color: 'var(--c-text-secondary)' }}>
                   {search ? `没有域名匹配 "${search}"` : '暂无数据，请先刷新'}
                 </td>
               </tr>
@@ -157,7 +163,7 @@ export function DomainTable({ domains }: DomainTableProps) {
 
 // Individual row with optional expanded detail
 function ExpandedDetail({ domain }: { domain: string }) {
-  const [data, setData] = useState<{ domain: string; entries: Array<{ time: string; type: string; answer: Array<{ type: string; value: string }>; elapsedMs: number; cached: boolean; upstream: string; status: string }>; upstreams: Array<{ upstream: string; count: number; avg: number }> } | null>(null)
+  const [data, setData] = useState<{ domain: string; entries: Array<{ time: string; type: string; answer: Array<{ type: string; value: string; ttl: number }>; elapsedMs: number; cached: boolean; upstream: string; status: string }>; upstreams: Array<{ upstream: string; count: number; avg: number }> } | null>(null)
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState(false)
 
@@ -172,7 +178,7 @@ function ExpandedDetail({ domain }: { domain: string }) {
 
   if (loading) return (
     <tr key={`${domain}-detail`}>
-      <td colSpan={10} className="border-0 p-0">
+      <td colSpan={12} className="border-0 p-0">
         <div className="animate-pulse px-4 pb-3 pt-1" onClick={e => e.stopPropagation()}>
           <div className="min-h-[120px] rounded-lg p-4" style={{ background: 'var(--c-accent-soft)', border: '1px solid var(--c-border)' }} />
         </div>
@@ -181,7 +187,7 @@ function ExpandedDetail({ domain }: { domain: string }) {
   )
   if (err || !data) return (
     <tr key={`${domain}-detail`}>
-      <td colSpan={10} className="border-0 p-0">
+      <td colSpan={12} className="border-0 p-0">
         <div className="px-4 pb-3 pt-1">
           <div className="min-h-[120px] rounded-lg p-4 text-xs" style={{ background: 'var(--c-accent-soft)', border: '1px solid var(--c-border)' }}>
             <span style={{ color: 'var(--c-text-secondary)' }}>详情加载失败</span>
@@ -191,21 +197,28 @@ function ExpandedDetail({ domain }: { domain: string }) {
     </tr>
   )
 
-  // Collect unique answers across all entries
-  const answerMap = new Map<string, { type: string; count: number }>()
+  // Collect unique answers across all entries with TTL info
+  const answerMap = new Map<string, { type: string; count: number; minTtl: number; maxTtl: number }>()
   for (const e of data.entries) {
     for (const a of e.answer ?? []) {
       const key = `${a.type}:${a.value}`
       const existing = answerMap.get(key)
-      if (existing) existing.count++
-      else answerMap.set(key, { type: a.type, count: 1 })
+      if (existing) {
+        existing.count++
+        if (a.ttl !== undefined) {
+          if (a.ttl < existing.minTtl) existing.minTtl = a.ttl
+          if (a.ttl > existing.maxTtl) existing.maxTtl = a.ttl
+        }
+      } else {
+        answerMap.set(key, { type: a.type, count: 1, minTtl: a.ttl, maxTtl: a.ttl })
+      }
     }
   }
   const answers = Array.from(answerMap.entries()).sort((a, b) => b[1].count - a[1].count)
 
   return (
     <tr key={`${domain}-detail`}>
-      <td colSpan={10} className="border-0 p-0">
+      <td colSpan={12} className="border-0 p-0">
         <div className="px-4 pb-3 pt-1" onClick={e => e.stopPropagation()}>
           <div className="rounded-lg p-4 text-xs" style={{ background: 'var(--c-accent-soft)', border: '1px solid var(--c-border)' }}>
             {/* Export button */}
@@ -242,12 +255,14 @@ function ExpandedDetail({ domain }: { domain: string }) {
                     const colonIdx = key.indexOf(':')
                     const aType = key.slice(0, colonIdx)
                     const aValue = key.slice(colonIdx + 1)
+                    const ttlText = val.minTtl !== undefined ? `TTL ${val.minTtl === val.maxTtl ? `${val.minTtl}s` : `${val.minTtl}~${val.maxTtl}s`}` : ''
                     return (
                       <span key={key} className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-mono"
                         style={{ background: 'var(--c-bg)', border: '1px solid var(--c-border)' }}>
                         <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--c-accent)' }}>{aType}</span>
                         <span>{aValue}</span>
                         <span className="text-[10px]" style={{ color: 'var(--c-text-secondary)' }}>×{val.count}</span>
+                        {ttlText && <span className="text-[10px]" style={{ color: 'var(--c-text-secondary)' }}>{ttlText}</span>}
                       </span>
                     )
                   })}
@@ -285,12 +300,11 @@ function ExpandedDetail({ domain }: { domain: string }) {
                   <span className="w-12 shrink-0 font-mono text-[10px]" style={{ color: 'var(--c-text-secondary)' }}>
                     {e.type}
                   </span>
-                  {e.answer?.length > 0 && (
+                  {e.answer?.length > 0 ? (
                     <span className="truncate font-mono" style={{ color: 'var(--c-text-secondary)' }}>
-                      {e.answer.map(a => a.value).join(', ')}
+                      {e.answer.map(a => `${a.value}${a.ttl ? ` (TTL=${a.ttl}s)` : ''}`).join(', ')}
                     </span>
-                  )}
-                  {!e.answer?.length && (
+                  ) : (
                     <span className="italic" style={{ color: 'var(--c-text-secondary)' }}>{e.status}</span>
                   )}
                 </div>
@@ -351,6 +365,8 @@ function TableRow({
           </span>
         </td>
         <td className={cell}>{fmtMs(d.uncached.p50)}</td>
+        <td className={cell} style={slowStyle(d.uncached.p60)}>{fmtMs(d.uncached.p60)}</td>
+        <td className={cell} style={slowStyle(d.uncached.p70)}>{fmtMs(d.uncached.p70)}</td>
         <td className={cell} style={slowStyle(d.uncached.p95)}>{fmtMs(d.uncached.p95)}</td>
         <td className={cell} style={slowStyle(d.uncached.p99)}>{fmtMs(d.uncached.p99)}</td>
         <td className={cell}>

@@ -56,6 +56,7 @@ export function Dashboard() {
         max: Math.max(...latencies.map(l => l.max)),
         avg: latencies.reduce((s, l) => s + l.avg * l.count, 0) / totalC,
         p20: 0, p50: p50s[Math.floor(p50s.length / 2)]?.p50 ?? 0,
+        p60: 0, p70: 0,
         p80: 0, p95: p95s[Math.floor(p95s.length * 0.95)]?.p95 ?? 0,
         p99: 0,
         slowRate: totalC > 0 ? slowC / totalC : 0,
