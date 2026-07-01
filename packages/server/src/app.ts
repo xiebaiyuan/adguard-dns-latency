@@ -4,6 +4,7 @@ import type { FastifyInstance } from 'fastify'
 import type { AnalysisResult } from 'shared'
 import type { AdguardConfig, RawFetchedEntry } from './adguard/client'
 import { refreshFromAdguard } from './adguard/fetcher'
+import { fetchStats } from './adguard/stats'
 
 interface CacheState {
   ready: boolean
@@ -50,6 +51,20 @@ export function buildApp(opts?: AppOptions): FastifyInstance {
       version: '0.1.0',
       adguardConfigured: adguardConfig !== null,
       adguardUrl: adguardConfig?.baseUrl ?? null,
+    }
+  })
+
+  // Stats from AdGuardHome
+  app.get('/api/analysis/stats', async (request, reply) => {
+    if (!adguardConfig) {
+      reply.status(400)
+      return { error: 'AdGuardHome not configured' }
+    }
+    try {
+      return await fetchStats(adguardConfig)
+    } catch (err) {
+      reply.status(502)
+      return { error: err instanceof Error ? err.message : String(err) }
     }
   })
 

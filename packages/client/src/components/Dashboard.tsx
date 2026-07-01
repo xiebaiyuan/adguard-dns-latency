@@ -4,6 +4,7 @@ import { useAnalysis } from '../hooks/useAnalysis'
 import { KpiCards } from './KpiCards'
 import { LatencyChart } from './LatencyChart'
 import { DomainTable } from './DomainTable'
+import { StatsPanel } from './StatsPanel'
 import { KpiSkeleton, ChartSkeleton, TableSkeleton } from './Skeleton'
 import { SettingsDialog } from './SettingsDialog'
 import { exportCsv } from '../lib/csv'
@@ -206,6 +207,11 @@ export function Dashboard() {
 
       {/* Domain Table */}
       {loading ? <TableSkeleton /> : <DomainTable domains={domains} />}
+
+      {/* Stats Panel (realtime aggregate data from AdGuardHome) */}
+      <section className="mb-6">
+        {!loading && <StatsPanel onRefreshNeeded={refresh} />}
+      </section>
 
       <SettingsDialog
         open={showSettings}

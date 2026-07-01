@@ -32,3 +32,14 @@ export interface AnalysisSummary {
   domainCount: number
   adguardUrl: string | null
 }
+
+export interface AdguardStats {
+  avgProcessingTime: number
+  totalQueries: number
+  totalBlocked: number
+  topQueriedDomains: Array<{ domain: string; count: number }>
+  topClients: Array<{ ip: string; count: number }>
+  topBlockedDomains: Array<{ domain: string; count: number }>
+  topUpstreams: Array<{ upstream: string; count: number; avgTime: number }>
+  history: Array<{ queries: number; blocked: number }>
+}
