@@ -359,7 +359,7 @@ export function Dashboard() {
       </div>
 
       {/* Stats Panel (实时统计数据来自 AdGuardHome) */}
-      {!loading && showStatsPanel && (
+      {showStatsPanel && (
         <CollapseSection title="实时统计" storageKey="collapse_stats" defaultOpen badge={
           <span className="rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider"
             style={{ background: 'var(--c-accent-soft)', color: 'var(--c-accent)' }}>

@@ -31,7 +31,9 @@ export function CollapseSection({ title, storageKey, defaultOpen, children, badg
           {open ? <CaretUp size={14} /> : <CaretDown size={14} />}
         </span>
       </button>
-      {open && children}
+      <div style={{ display: open ? '' : 'none' }}>
+        {children}
+      </div>
     </div>
   )
 }
