@@ -1,5 +1,7 @@
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
+import fastifyStatic from '@fastify/static'
+import { resolve } from 'path'
 import type { FastifyInstance } from 'fastify'
 import type { AnalysisResult } from 'shared'
 import type { AdguardConfig, RawFetchedEntry } from './adguard/client'
@@ -44,6 +46,15 @@ export function buildApp(opts?: AppOptions): FastifyInstance {
   app.register(cors, {
     origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
   })
+
+  // Serve built client static files in production
+  if (process.env.NODE_ENV === 'production') {
+    const clientDist = resolve(import.meta.dirname, '../../client/dist')
+    app.register(fastifyStatic, {
+      root: clientDist,
+      prefix: '/',
+    })
+  }
 
   // Health check
   app.get('/api/health', async () => {
