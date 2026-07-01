@@ -36,6 +36,10 @@ export function buildApp(opts?: AppOptions): FastifyInstance {
     rawEntriesByDomain: opts?.cacheSeed ?? new Map(),
   }
 
+  // Stats cache (实时统计) — 30s TTL
+  let statsCache: { data: any; expiresAt: number } | null = null
+  const STATS_TTL = 30_000
+
   // If cacheSeed is provided, treat as pre-loaded data
   if (opts?.cacheSeed && opts.cacheSeed.size > 0) {
     cache.ready = true
@@ -66,14 +70,19 @@ export function buildApp(opts?: AppOptions): FastifyInstance {
     }
   })
 
-  // Stats from AdGuardHome
+  // Stats from AdGuardHome (cached, 30s TTL)
   app.get('/api/analysis/stats', async (request, reply) => {
     if (!adguardConfig) {
       reply.status(400)
       return { error: 'AdGuardHome not configured' }
     }
+    if (statsCache && Date.now() < statsCache.expiresAt) {
+      return statsCache.data
+    }
     try {
-      return await fetchStats(adguardConfig)
+      const data = await fetchStats(adguardConfig)
+      statsCache = { data, expiresAt: Date.now() + STATS_TTL }
+      return data
     } catch (err) {
       reply.status(502)
       return { error: err instanceof Error ? err.message : String(err) }
@@ -217,6 +226,7 @@ export function buildApp(opts?: AppOptions): FastifyInstance {
       cache.timeRange = null
       cache.lastUpdated = null
       cache.ready = false
+      statsCache = null
     }
 
     adguardConfig = newConfig
