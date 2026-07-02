@@ -1,27 +1,14 @@
 # AdGuardHome DNS Latency Analyzer
 
-<p align="center">
-  <a href="README.md"><strong>🇨🇳 中文版</strong></a> ·
-  <img src="https://img.shields.io/github/v/release/xiebaiyuan/adguard-dns-latency" alt="Release">
-  <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License">
-  <img src="https://img.shields.io/badge/node-%3E%3D18-brightgreen" alt="Node">
-</p>
+<a href="README.md">🇨🇳 中文版</a> · [![Release](https://img.shields.io/github/v/release/xiebaiyuan/adguard-dns-latency)](https://github.com/xiebaiyuan/adguard-dns-latency/releases) ![License](https://img.shields.io/badge/License-MIT-yellow.svg) ![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)
 
-<p align="center">
-  Aggregate DNS latency by domain from AdGuardHome query logs. Pinpoint slow queries and upstream bottlenecks.
-</p>
+Aggregate DNS latency by domain from AdGuardHome query logs. Pinpoint slow queries and upstream bottlenecks.
 
 ## Screenshots
 
-<p align="center">
-  <img src="docs/screenshots/dashboard-overview.png" width="720">
-</p>
-<p align="center">
-  <img src="docs/screenshots/domain-table.png" width="720">
-</p>
-<p align="center">
-  <img src="docs/screenshots/stats-panel.png" width="720">
-</p>
+<img src="docs/screenshots/dashboard-overview.png" width="720">  
+<img src="docs/screenshots/domain-table.png" width="720">  
+<img src="docs/screenshots/stats-panel.png" width="720">
 
 ## Quick Start
 

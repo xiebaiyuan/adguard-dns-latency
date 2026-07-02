@@ -1,27 +1,14 @@
 # AdGuardHome DNS 延时分析
 
-<p align="center">
-  <a href="README.en.md"><strong>🇺🇸 English</strong></a> ·
-  <img src="https://img.shields.io/github/v/release/xiebaiyuan/adguard-dns-latency" alt="Release">
-  <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License">
-  <img src="https://img.shields.io/badge/node-%3E%3D18-brightgreen" alt="Node">
-</p>
+<a href="README.en.md">🇺🇸 English</a> · [![Release](https://img.shields.io/github/v/release/xiebaiyuan/adguard-dns-latency)](https://github.com/xiebaiyuan/adguard-dns-latency/releases) ![License](https://img.shields.io/badge/License-MIT-yellow.svg) ![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen)
 
-<p align="center">
-  基于 AdGuardHome 查询日志，按域名聚合延时分布，定位慢查询和上游瓶颈。
-</p>
+基于 AdGuardHome 查询日志，按域名聚合延时分布，定位慢查询和上游瓶颈。
 
 ## 截图
 
-<p align="center">
-  <img src="docs/screenshots/dashboard-overview.png" width="720">
-</p>
-<p align="center">
-  <img src="docs/screenshots/domain-table.png" width="720">
-</p>
-<p align="center">
-  <img src="docs/screenshots/stats-panel.png" width="720">
-</p>
+<img src="docs/screenshots/dashboard-overview.png" width="720">  
+<img src="docs/screenshots/domain-table.png" width="720">  
+<img src="docs/screenshots/stats-panel.png" width="720">
 
 ## 快速开始
 
