@@ -33,17 +33,14 @@ This tool taps into [AdGuardHome](https://github.com/AdguardTeam/AdGuardHome)'s 
 
 <p align="center">
   <img src="docs/screenshots/dashboard-overview.png" alt="Dashboard" width="720">
-  <br><em>Dashboard — KPI cards + latency distribution + domain rankings</em>
 </p>
 
 <p align="center">
   <img src="docs/screenshots/domain-table.png" alt="Domain Table" width="720">
-  <br><em>Domain table — search, sort, inline upstream drill-down, resolved addresses with TTL</em>
 </p>
 
 <p align="center">
   <img src="docs/screenshots/stats-panel.png" alt="Stats Panel" width="720">
-  <br><em>Live stats — block ratio pie chart, query type distribution, top clients, upstream response times</em>
 </p>
 
 ---
