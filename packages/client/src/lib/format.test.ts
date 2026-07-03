@@ -99,5 +99,25 @@ describe('filterAndSortDomains', () => {
     const result = filterAndSortDomains(domains, '', 'all', 'domain', false)
     expect(result.map(d => d.domain)).toEqual(['baidu.com', 'google.com', 'youtube.com'])
   })
+
+  it('should sort by blockedCount descending', () => {
+    const customDomains = [
+      { ...domains[0], domain: 'a.com', blockedCount: 5, blockedRate: 0.5, topBlockRules: [] },
+      { ...domains[0], domain: 'b.com', blockedCount: 20, blockedRate: 0.8, topBlockRules: [] },
+      { ...domains[0], domain: 'c.com', blockedCount: 0, blockedRate: 0, topBlockRules: [] },
+    ]
+    const result = filterAndSortDomains(customDomains, '', 'all', 'blockedCount', true)
+    expect(result.map(d => d.domain)).toEqual(['b.com', 'a.com', 'c.com'])
+  })
+
+  it('should sort by blockedCount ascending', () => {
+    const customDomains = [
+      { ...domains[0], domain: 'a.com', blockedCount: 5, blockedRate: 0.5, topBlockRules: [] },
+      { ...domains[0], domain: 'b.com', blockedCount: 20, blockedRate: 0.8, topBlockRules: [] },
+      { ...domains[0], domain: 'c.com', blockedCount: 0, blockedRate: 0, topBlockRules: [] },
+    ]
+    const result = filterAndSortDomains(customDomains, '', 'all', 'blockedCount', false)
+    expect(result.map(d => d.domain)).toEqual(['c.com', 'a.com', 'b.com'])
+  })
 })
 

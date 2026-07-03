@@ -16,6 +16,36 @@ function q(name: string, elapsedMs: number, cached = false, type = 'A'): QueryLo
   }
 }
 
+/** 辅助函数：创建被拦截的查询条目 */
+function blockedQ(name: string, rule: string, elapsedMs = 10): QueryLogEntry {
+  return {
+    elapsedMs,
+    cached: false,
+    upstream: '',
+    status: 'NOERROR',
+    question: { name, type: 'A' },
+    client: '192.168.1.100',
+    clientName: 'test-device',
+    blockReason: 'FilteredBlackList',
+    blockRule: rule,
+  }
+}
+
+/** 辅助函数：创建含 NotFiltered 前缀的放行条目（模拟真实 API） */
+function notFilteredQ(name: string, reason: string): QueryLogEntry {
+  return {
+    elapsedMs: 10,
+    cached: false,
+    upstream: 'tls://dns.quad9.net',
+    status: 'NOERROR',
+    question: { name, type: 'A' },
+    client: '192.168.1.100',
+    clientName: 'test-device',
+    blockReason: reason,
+    blockRule: '',
+  }
+}
+
 describe('analyze', () => {
   it('computes slow rate and severe rate correctly', () => {
     const entries = [
@@ -173,5 +203,76 @@ describe('analyze', () => {
     expect(stats.all.min).toBe(12)
     expect(stats.all.max).toBe(120)
     expect(stats.all.avg).toBe(59)
+  })
+
+  it('computes blockedCount and blockedRate correctly', () => {
+    const entries = [
+      q('example.com', 10),              // not blocked
+      q('example.com', 20),              // not blocked
+      blockedQ('example.com', '||blocked.com^'),   // blocked
+      blockedQ('example.com', '||blocked.com^'),   // blocked
+      blockedQ('example.com', '||other.com^'),     // blocked by different rule
+    ]
+
+    const stats = analyze(entries)[0]
+    expect(stats.blockedCount).toBe(3)
+    expect(stats.blockedRate).toBe(3 / 5)
+  })
+
+  it('aggregates topBlockRules correctly', () => {
+    const entries = [
+      blockedQ('example.com', '||tracker.com^'),
+      blockedQ('example.com', '||tracker.com^'),
+      blockedQ('example.com', '||tracker.com^'),
+      blockedQ('example.com', '||ad.com^'),
+      blockedQ('example.com', '||ad.com^'),
+      blockedQ('example.com', '||other.com^'),
+    ]
+
+    const stats = analyze(entries)[0]
+    expect(stats.topBlockRules).toHaveLength(3)
+
+    const top = stats.topBlockRules[0]
+    expect(top.rule).toBe('||tracker.com^')
+    expect(top.count).toBe(3)
+
+    expect(stats.topBlockRules[1]).toEqual({ rule: '||ad.com^', count: 2 })
+    expect(stats.topBlockRules[2]).toEqual({ rule: '||other.com^', count: 1 })
+  })
+
+  it('has no topBlockRules when no queries are blocked', () => {
+    const entries = [q('example.com', 10), q('example.com', 20)]
+    const stats = analyze(entries)[0]
+    expect(stats.blockedCount).toBe(0)
+    expect(stats.blockedRate).toBe(0)
+    expect(stats.topBlockRules).toEqual([])
+  })
+
+  it('does not count NotFilteredNotFound/NotFilteredWhiteList as blocked', () => {
+    const entries = [
+      notFilteredQ('example.com', 'NotFilteredNotFound'),
+      notFilteredQ('example.com', 'NotFilteredWhiteList'),
+      q('example.com', 10),            // empty blockReason
+    ]
+
+    const stats = analyze(entries)[0]
+    expect(stats.blockedCount).toBe(0)
+    expect(stats.blockedRate).toBe(0)
+  })
+
+  it('groups topClients by IP with count', () => {
+    const entries = [
+      q('google.com', 10),   // client: 192.168.1.100, name: test-device (first occurrence)
+      { ...q('google.com', 20), client: '192.168.1.100', clientName: 'macbook' }, // name ignored (already mapped)
+      { ...q('google.com', 30), client: '192.168.1.50', clientName: 'iphone' },
+      { ...q('google.com', 40), client: '192.168.1.50', clientName: 'iphone' },
+      { ...q('google.com', 50), client: '192.168.1.200', clientName: undefined },
+    ]
+
+    const stats = analyze(entries)[0]
+    expect(stats.topClients).toHaveLength(3)
+    expect(stats.topClients[0]).toMatchObject({ ip: '192.168.1.100', name: 'test-device', count: 2 })
+    expect(stats.topClients[1]).toMatchObject({ ip: '192.168.1.50', name: 'iphone', count: 2 })
+    expect(stats.topClients[2]).toMatchObject({ ip: '192.168.1.200', name: undefined, count: 1 })
   })
 })
