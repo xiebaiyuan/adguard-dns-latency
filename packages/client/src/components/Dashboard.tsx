@@ -297,7 +297,7 @@ export function Dashboard() {
             </div>
           )}
         </div>
-        <div className="fade-in-content" style={{ opacity: data !== null ? 1 : 0, transition: 'opacity 400ms ease-out' }}>
+        <div className={data ? 'fade-in-content' : 'shimmer-bg rounded-xl p-4'}>
           <KpiCards
             totalQueries={loading ? 0 : (aggregate?.totalCount ?? 0)}
             cacheHitRate={loading ? 0 : (aggregate?.overallCacheRate ?? 0)}
@@ -321,7 +321,7 @@ export function Dashboard() {
 
       {/* Latency Chart — lazy 加载 */}
       <CollapseSection title="域名延时分布" storageKey="collapse_latency">
-        <div className="mb-6 fade-in-content" style={{ opacity: domains.length > 0 ? 1 : 0, transition: 'opacity 400ms ease-out' }}>
+        <div className={domains.length > 0 ? 'mb-6 fade-in-content' : 'mb-6 shimmer-bg rounded-xl p-4'} style={{ minHeight: '200px' }}>
           <Suspense fallback={<div className="glass-card rounded-xl p-4 sm:p-6">
             <div className="mb-4 h-4 w-32 rounded" style={{ background: 'var(--c-border)' }} />
             <div className="h-48 sm:h-52" style={{ background: 'var(--c-accent-soft)' }} />
@@ -333,7 +333,7 @@ export function Dashboard() {
 
       {/* Domain Table */}
       <CollapseSection title="域名延时排行" storageKey="collapse_domains">
-        <div className="fade-in-content" style={{ opacity: domains.length > 0 ? 1 : 0, transition: 'opacity 400ms ease-out' }}>
+        <div className={domains.length > 0 ? 'fade-in-content' : 'shimmer-bg rounded-xl p-4'}>
           <DomainTable domains={domains} />
         </div>
       </CollapseSection>
