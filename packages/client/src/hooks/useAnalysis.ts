@@ -115,7 +115,14 @@ export function useAnalysis(): UseAnalysisResult {
   useEffect(() => {
     const init = async () => {
       await fetchDashboard()
-      if (!autoRefreshed.current && localStorage.getItem('adgh_url')) {
+
+      // 检查缓存新鲜度：5 分钟内的数据直接复用，不触发刷新给 5825u 降温
+      const summaryRes = await fetch(`${API_BASE}/api/analysis/summary`)
+      const summary = await summaryRes.json() as { ready: boolean; lastUpdated: string | null }
+      const lastUpdated = summary.lastUpdated
+      const isFresh = lastUpdated && (Date.now() - new Date(lastUpdated).getTime()) < 5 * 60 * 1000
+
+      if (!autoRefreshed.current && localStorage.getItem('adgh_url') && !isFresh) {
         autoRefreshed.current = true
         setLoading(true)
         await autoRefresh()
