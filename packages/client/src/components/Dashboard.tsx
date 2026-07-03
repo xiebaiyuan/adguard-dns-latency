@@ -180,21 +180,21 @@ export function Dashboard() {
           <button
             onClick={handleExport}
             disabled={!domains.length}
-            className="glass-card inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
-            style={{ color: 'var(--c-text)' }}
+            className="glass-card inline-flex cursor-pointer items-center justify-center rounded-lg p-1.5 transition-colors disabled:opacity-40"
+            style={{ color: 'var(--c-text-secondary)' }}
+            title="导出 CSV"
           >
             <FileCsv size={14} />
-            导出 CSV
           </button>
 
           <button
             onClick={refresh}
             disabled={refreshing}
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-opacity disabled:cursor-wait disabled:opacity-60"
-            style={{ background: 'var(--c-accent-gradient)', border: 'none' }}
+            className="glass-card inline-flex cursor-pointer items-center justify-center rounded-lg p-1.5 transition-colors disabled:opacity-40"
+            style={{ color: 'var(--c-accent)' }}
+            title="刷新分析数据"
           >
             <ArrowClockwise size={14} className={refreshing ? 'animate-spin' : ''} />
-            {refreshing ? '刷新中...' : '刷新'}
           </button>
         </div>
       </div>
