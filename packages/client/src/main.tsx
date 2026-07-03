@@ -8,3 +8,6 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 )
+
+// 触发根节点淡入：setTimeout 确保在首次渲染之后
+setTimeout(() => document.getElementById('root')?.classList.add('entered'), 0)

@@ -5,6 +5,11 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AdGuard DNS 延时分析</title>
+    <style>
+      /* 首屏入口：页面挂载时从透明渐入 */
+      #root { opacity: 0; }
+      #root.entered { opacity: 1; transition: opacity 300ms ease-out; }
+    </style>
   </head>
   <body>
     <div id="root"></div>
