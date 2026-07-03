@@ -1,4 +1,4 @@
-import { FileCsv, ArrowClockwise, Gear, ChatCircleText, ShieldCheck, Prohibit, Trash, Sliders } from '@phosphor-icons/react'
+import { FileCsv, ArrowClockwise, Gear, ShieldCheck, Prohibit, Trash, Sliders } from '@phosphor-icons/react'
 import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { useAnalysis } from '../hooks/useAnalysis'
 import { useAdguard } from '../hooks/useAdguard'
@@ -9,7 +9,6 @@ import { CollapseSection } from './CollapseSection'
 import { SettingsDialog } from './SettingsDialog'
 import { ManagementDialog } from './ManagementDialog'
 import { exportCsv } from '../lib/csv'
-import { buildPrompt, copyToClipboard } from '../lib/prompt'
 import { TIME_OPTIONS } from '../lib/format'
 
 // 懒加载：recharts 链路只在需要图表时下载
@@ -24,15 +23,12 @@ export function Dashboard() {
   const { loading, error, data, refresh, refreshing } = useAnalysis()
   const adguard = useAdguard()
   const [showSettings, setShowSettings] = useState(false)
-  const [autoRefresh, setAutoRefresh] = useState(false)
-  const autoRef = useRef(autoRefresh)
-  autoRef.current = autoRefresh
+  const timePickerRef = useRef<HTMLDivElement | null>(null)
 
   // Panel visibility from localStorage
   const [showStatsPanel, setShowStatsPanel] = useState(() => getPanelVisible('panel_stats', true))
   const [showManagement, setShowManagement] = useState(false)
   const [showTimePicker, setShowTimePicker] = useState(false)
-  const timePickerRef = useRef<HTMLDivElement | null>(null)
 
   const currentTimeHours = parseInt(localStorage.getItem('adgh_time_hours') ?? '24', 10)
 
@@ -75,39 +71,9 @@ export function Dashboard() {
     refresh()
   }
 
-  useEffect(() => {
-    if (!autoRefresh || refreshing || !data?.ready) return
-
-    const timeout = 5 * 60 * 1000
-    let timer: ReturnType<typeof setTimeout> | null = null
-
-    const scheduleNext = () => {
-      timer = setTimeout(async () => {
-        await refresh()
-        if (autoRef.current) scheduleNext()
-      }, timeout)
-    }
-
-    scheduleNext()
-
-    return () => {
-      if (timer) clearTimeout(timer)
-    }
-  }, [autoRefresh, refreshing, data?.ready, refresh])
-
   const handleExport = () => {
     if (!domains.length) return
     exportCsv(domains)
-  }
-
-  const [copyOk, setCopyOk] = useState(false)
-  const handleCopy = async () => {
-    const text = buildPrompt(data, domains)
-    const ok = await copyToClipboard(text)
-    if (ok) {
-      setCopyOk(true)
-      setTimeout(() => setCopyOk(false), 2000)
-    }
   }
 
   return (
@@ -220,31 +186,7 @@ export function Dashboard() {
             <FileCsv size={14} />
             导出 CSV
           </button>
-          <button
-            onClick={handleCopy}
-            disabled={!domains.length && !data?.adguardUrl}
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
-            style={{
-              background: copyOk ? 'var(--c-success)' : 'var(--c-accent-soft)',
-              color: copyOk ? '#fff' : 'var(--c-accent)',
-              border: 'none',
-            }}
-          >
-            <ChatCircleText size={14} />
-            {copyOk ? '已复制!' : '向 LLM 提问'}
-          </button>
-          <label
-            className="inline-flex cursor-pointer items-center gap-1.5 text-xs select-none"
-            style={{ color: 'var(--c-text-secondary)' }}
-          >
-            <input
-              type="checkbox"
-              checked={autoRefresh}
-              onChange={e => setAutoRefresh(e.target.checked)}
-              className="h-3.5 w-3.5"
-            />
-            自动刷新
-          </label>
+
           <button
             onClick={refresh}
             disabled={refreshing}
