@@ -92,27 +92,27 @@ export function StatsPanel({ onRefreshNeeded, queryTypeDistribution }: {
 
       {/* ── 图表行 ── 3 列，图表未就绪时 Card 占位，就绪后 PieChartCard 直接渲染（它自带 glass-card） ── */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {showCharts ? (
-          <Suspense fallback={<Card title="屏蔽比例" ready={false}><div style={{ minHeight: '12rem' }} /></Card>}>
-            <PieChartCard title="屏蔽比例" data={blockedRatio} />
-          </Suspense>
-        ) : (
-          <Card title="屏蔽比例" ready={false}><div style={{ minHeight: '12rem' }} /></Card>
-        )}
-        {showCharts && queryTypeDistribution?.length ? (
-          <Suspense fallback={<Card title="查询类型分布" ready={false}><div style={{ minHeight: '12rem' }} /></Card>}>
-            <PieChartCard title="查询类型分布" data={queryTypeDistribution} />
-          </Suspense>
-        ) : (
-          <Card title="查询类型分布" ready={false}><div style={{ minHeight: '12rem' }} /></Card>
-        )}
-        {showCharts && stats?.topClients.length ? (
-          <Suspense fallback={<Card title="客户端排行 (Top 6)" ready={false}><div style={{ minHeight: '12rem' }} /></Card>}>
-            <PieChartCard title="客户端排行 (Top 6)" data={stats!.topClients.map(c => ({ name: c.name || c.ip, value: c.count }))} />
-          </Suspense>
-        ) : (
-          <Card title="客户端排行 (Top 6)" ready={false}><div style={{ minHeight: '12rem' }} /></Card>
-        )}
+        <Card title="屏蔽比例" ready={showCharts}>
+          {showCharts ? (
+            <Suspense fallback={<div style={{ minHeight: '7rem' }} />}>
+              <PieChartCard data={blockedRatio} />
+            </Suspense>
+          ) : <div style={{ minHeight: '7rem' }} />}
+        </Card>
+        <Card title="查询类型分布" ready={showCharts && !!queryTypeDistribution?.length}>
+          {showCharts && queryTypeDistribution?.length ? (
+            <Suspense fallback={<div style={{ minHeight: '7rem' }} />}>
+              <PieChartCard data={queryTypeDistribution} />
+            </Suspense>
+          ) : <div style={{ minHeight: '7rem' }} />}
+        </Card>
+        <Card title="客户端排行 (Top 6)" ready={showCharts && !!stats?.topClients.length}>
+          {showCharts && stats?.topClients.length ? (
+            <Suspense fallback={<div style={{ minHeight: '7rem' }} />}>
+              <PieChartCard data={stats!.topClients.map(c => ({ name: c.name || c.ip, value: c.count }))} />
+            </Suspense>
+          ) : <div style={{ minHeight: '7rem' }} />}
+        </Card>
       </div>
 
       {/* ── 表格行 ── 3 列始终存在 ── */}
