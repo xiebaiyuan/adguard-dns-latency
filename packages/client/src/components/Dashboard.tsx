@@ -1,5 +1,5 @@
 import { FileCsv, ArrowClockwise, Gear, ChatCircleText, ShieldCheck, Prohibit, Trash, Sliders } from '@phosphor-icons/react'
-import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react'
+import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { useAnalysis } from '../hooks/useAnalysis'
 import { useAdguard } from '../hooks/useAdguard'
 import { KpiCards } from './KpiCards'
@@ -21,7 +21,7 @@ function getPanelVisible(key: string, def: boolean): boolean {
 }
 
 export function Dashboard() {
-  const { loading, error, summary, domains, refresh, refreshing } = useAnalysis()
+  const { loading, error, data, refresh, refreshing } = useAnalysis()
   const adguard = useAdguard()
   const [showSettings, setShowSettings] = useState(false)
   const [autoRefresh, setAutoRefresh] = useState(false)
@@ -36,44 +36,9 @@ export function Dashboard() {
 
   const currentTimeHours = parseInt(localStorage.getItem('adgh_time_hours') ?? '24', 10)
 
-  // 整体聚合统计 — useMemo 避免每次渲染重新计算
-  const aggregateStats = useMemo(() => {
-    const totalCount = domains.reduce((s, d) => s + d.totalCount, 0)
-    const totalCached = domains.reduce((s, d) => s + d.cachedCount, 0)
-    const overallCacheRate = totalCount > 0 ? totalCached / totalCount : 0
-
-    const allUncached = domains.map(d => d.uncached)
-    const allAll = domains.map(d => d.all)
-
-    const computeOverall = (latencies: typeof allUncached) => {
-      if (latencies.length === 0) return null
-      const totalC = latencies.reduce((s, l) => s + l.count, 0)
-      const slowC = latencies.reduce((s, l) => s + l.slowRate * l.count, 0)
-      const severeC = latencies.reduce((s, l) => s + l.severeRate * l.count, 0)
-      const p50s = [...latencies].sort((a, b) => a.p50 - b.p50)
-      const p95s = [...latencies].sort((a, b) => a.p95 - b.p95)
-      return {
-        count: totalC,
-        min: Math.min(...latencies.map(l => l.min)),
-        max: Math.max(...latencies.map(l => l.max)),
-        avg: latencies.reduce((s, l) => s + l.avg * l.count, 0) / totalC,
-        p20: 0, p50: p50s[Math.floor(p50s.length / 2)]?.p50 ?? 0,
-        p60: 0, p70: 0,
-        p80: 0, p95: p95s[Math.floor(p95s.length * 0.95)]?.p95 ?? 0,
-        p99: 0,
-        slowRate: totalC > 0 ? slowC / totalC : 0,
-        severeRate: totalC > 0 ? severeC / totalC : 0,
-      }
-    }
-
-    return {
-      totalCount,
-      totalCached,
-      overallCacheRate,
-      overallUncached: computeOverall(allUncached),
-      overallAll: computeOverall(allAll),
-    }
-  }, [domains])
+  const aggregate = data?.aggregate
+  const domains = data?.domains ?? []
+  const queryTypeDistribution = data?.queryTypeDistribution
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -111,10 +76,9 @@ export function Dashboard() {
   }
 
   useEffect(() => {
-    if (!autoRefresh || refreshing || !summary?.ready) return
+    if (!autoRefresh || refreshing || !data?.ready) return
 
-    // Recursive setTimeout: schedule next cycle only after current refresh
-    const timeout = 5 * 60 * 1000 // 5 分钟
+    const timeout = 5 * 60 * 1000
     let timer: ReturnType<typeof setTimeout> | null = null
 
     const scheduleNext = () => {
@@ -129,20 +93,7 @@ export function Dashboard() {
     return () => {
       if (timer) clearTimeout(timer)
     }
-  }, [autoRefresh, refreshing, summary?.ready, refresh])
-
-  // Aggregate query type distribution across all domains
-  const queryTypeDistribution = useMemo(() => {
-    const acc: Record<string, number> = {}
-    for (const d of domains) {
-      for (const [t, c] of Object.entries(d.queryTypes)) {
-        acc[t] = (acc[t] ?? 0) + c
-      }
-    }
-    return Object.entries(acc)
-      .sort(([, a], [, b]) => b - a)
-      .map(([name, value]) => ({ name, value }))
-  }, [domains])
+  }, [autoRefresh, refreshing, data?.ready, refresh])
 
   const handleExport = () => {
     if (!domains.length) return
@@ -151,7 +102,7 @@ export function Dashboard() {
 
   const [copyOk, setCopyOk] = useState(false)
   const handleCopy = async () => {
-    const text = buildPrompt(summary, domains)
+    const text = buildPrompt(data, domains)
     const ok = await copyToClipboard(text)
     if (ok) {
       setCopyOk(true)
@@ -174,26 +125,26 @@ export function Dashboard() {
       {/* Toolbar */}
       <div className="glass-card mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl px-4 py-3">
         <div className="flex items-center gap-2">
-          <div className="flex h-2 w-2 rounded-full" style={{ background: summary?.ready ? 'var(--c-success)' : 'var(--c-text-secondary)' }} />
+          <div className="flex h-2 w-2 rounded-full" style={{ background: data?.ready ? 'var(--c-success)' : 'var(--c-text-secondary)' }} />
           <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--c-text)' }}>
-            {summary?.ready ? '分析就绪' : '等待数据'}
+            {data?.ready ? '分析就绪' : '等待数据'}
           </span>
-          {summary?.adguardUrl && (
+          {data?.adguardUrl && (
             <span className="hidden text-xs sm:inline" style={{ color: 'var(--c-text-secondary)' }}>
-              · {summary.adguardUrl}
+              · {data.adguardUrl}
             </span>
           )}
-          {summary?.lastUpdated && (
+          {data?.lastUpdated && (
             <span className="text-xs" style={{ color: 'var(--c-text-secondary)' }}>
-              · 更新于 {new Date(summary.lastUpdated).toLocaleTimeString()}
+              · 更新于 {new Date(data.lastUpdated).toLocaleTimeString()}
             </span>
           )}
         </div>
         <div className="flex items-center gap-2">
           {/* Current profile indicator */}
-          {summary?.adguardUrl && (
+          {data?.adguardUrl && (
             <span className="hidden text-xs sm:inline" style={{ color: 'var(--c-text-secondary)' }}>
-              {localStorage.getItem('adgh_profile_name') || summary.adguardUrl.replace(/^https?:\/\//, '').split('/')[0]}
+              {localStorage.getItem('adgh_profile_name') || data.adguardUrl.replace(/^https?:\/\//, '').split('/')[0]}
             </span>
           )}
           {/* Panel visibility toggles */}
@@ -212,7 +163,7 @@ export function Dashboard() {
             />
             统计
           </label>
-          {/* Protection toggle — 始终占位（min-width 防止 status 就绪前按钮凭空出现） */}
+          {/* Protection toggle — 始终占位 */}
           <div className="inline-flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1.5 transition-colors" style={{ color: adguard.status?.protectionEnabled ? 'var(--c-success)' : 'var(--c-text-secondary)', minWidth: '70px', visibility: adguard.status ? 'visible' : 'hidden' }}>
             {adguard.status ? (() => {
               const prot = adguard.status.protectionEnabled
@@ -271,7 +222,7 @@ export function Dashboard() {
           </button>
           <button
             onClick={handleCopy}
-            disabled={!domains.length && !summary?.adguardUrl}
+            disabled={!domains.length && !data?.adguardUrl}
             className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
             style={{
               background: copyOk ? 'var(--c-success)' : 'var(--c-accent-soft)',
@@ -306,11 +257,11 @@ export function Dashboard() {
         </div>
       </div>
 
-      {/* KPI Cards */}
+      {/* KPI Cards — 数据来自后端预聚合 */}
       <div className="mb-6">
         <div className="mb-3 flex items-center gap-2">
           <span className="text-sm font-medium" style={{ color: 'var(--c-text)' }}>分析概览</span>
-          {summary?.timeRange?.start && (
+          {data?.timeRange?.start && (
             <div className="relative" ref={timePickerRef}>
               <button
                 onClick={() => setShowTimePicker(!showTimePicker)}
@@ -332,9 +283,7 @@ export function Dashboard() {
                     <button
                       key={opt.value}
                       onClick={() => changeTimeRange(opt.value)}
-                      className={`block w-full cursor-pointer px-3 py-2 text-left transition-colors hover:opacity-80 ${
-                        currentTimeHours === opt.value ? 'font-medium' : ''
-                      }`}
+                      className={`block w-full cursor-pointer px-3 py-2 text-left transition-colors hover:opacity-80 ${currentTimeHours === opt.value ? 'font-medium' : ''}`}
                       style={{
                         color: currentTimeHours === opt.value ? 'var(--c-accent)' : 'var(--c-text)',
                         background: currentTimeHours === opt.value ? 'var(--c-accent-soft)' : 'transparent',
@@ -350,10 +299,10 @@ export function Dashboard() {
         </div>
         <div className="fade-in-content">
           <KpiCards
-            totalQueries={loading ? 0 : aggregateStats.totalCount}
-            cacheHitRate={loading ? 0 : aggregateStats.overallCacheRate}
-            uncached={loading ? null : aggregateStats.overallUncached}
-            all={loading ? null : aggregateStats.overallAll}
+            totalQueries={loading ? 0 : (aggregate?.totalCount ?? 0)}
+            cacheHitRate={loading ? 0 : (aggregate?.overallCacheRate ?? 0)}
+            uncached={loading ? null : (aggregate?.overallUncached ?? null)}
+            all={loading ? null : (aggregate?.overallAll ?? null)}
           />
         </div>
       </div>
@@ -370,7 +319,7 @@ export function Dashboard() {
         </CollapseSection>
       )}
 
-      {/* Latency Chart */}
+      {/* Latency Chart — lazy 加载 */}
       <CollapseSection title="域名延时分布" storageKey="collapse_latency">
         <div className="mb-6 fade-in-content">
           <Suspense fallback={<div className="glass-card rounded-xl p-4 sm:p-6">

@@ -101,6 +101,76 @@ export function buildApp(opts?: AppOptions): FastifyInstance {
     }
   })
 
+  // Dashboard payload — 后端预聚合，前端一条请求拿到全部数据直接渲染
+  app.get('/api/analysis/dashboard', async () => {
+    const domains = cache.data ?? []
+    const ready = cache.ready
+
+    // 预聚合统计
+    let totalCount = 0
+    let totalCached = 0
+    let accCount = 0
+    let accSum = 0
+    let accSlow = 0
+    let accSevere = 0
+    const p50s: number[] = []
+    const p95s: number[] = []
+    const queryTypeAcc: Record<string, number> = {}
+
+    for (const d of domains) {
+      totalCount += d.totalCount
+      totalCached += d.cachedCount
+      const u = d.uncached
+      accCount += u.count
+      accSum += u.avg * u.count
+      accSlow += u.slowRate * u.count
+      accSevere += u.severeRate * u.count
+      p50s.push(u.p50)
+      p95s.push(u.p95)
+      for (const [t, c] of Object.entries(d.queryTypes)) {
+        queryTypeAcc[t] = (queryTypeAcc[t] ?? 0) + c
+      }
+    }
+
+    p50s.sort((a, b) => a - b)
+    p95s.sort((a, b) => a - b)
+    const mid = Math.floor(p50s.length / 2)
+    const p95idx = Math.floor(p95s.length * 0.95)
+
+    const overallCacheRate = totalCount > 0 ? totalCached / totalCount : 0
+    const overallSlowRate = accCount > 0 ? accSlow / accCount : 0
+    const overallSevereRate = accCount > 0 ? accSevere / accCount : 0
+
+    const queryTypeDistribution = Object.entries(queryTypeAcc)
+      .sort(([, a], [, b]) => b - a)
+      .map(([name, value]) => ({ name, value }))
+
+    const mkLatency = (p50: number, p95: number, avg: number, count: number, slowRate: number, severeRate: number) => ({
+      count, min: 0, max: 0, avg, p20: 0, p50, p60: 0, p70: 0, p80: 0, p95, p99: 0, slowRate, severeRate,
+    })
+
+    const allLatency = totalCount > 0 ? mkLatency(p50s[mid] ?? 0, p95s[p95idx] ?? 0, accCount > 0 ? accSum / accCount : 0, totalCount, overallSlowRate, overallSevereRate) : null
+    const uncachedLatency = accCount > 0 ? mkLatency(p50s[mid] ?? 0, p95s[p95idx] ?? 0, accSum / accCount, accCount, overallSlowRate, overallSevereRate) : null
+
+    return {
+      ready,
+      timeRange: cache.timeRange,
+      lastUpdated: cache.lastUpdated,
+      lastError: cache.lastError,
+      adguardUrl: adguardConfig?.baseUrl ?? null,
+      domainCount: domains.length,
+      aggregate: {
+        totalCount,
+        totalCached,
+        overallCacheRate,
+        overallUncached: uncachedLatency,
+        overallAll: allLatency,
+      },
+      queryTypeDistribution,
+      domains: domains.slice(0, 500),
+    }
+  })
+
   // Domain list
   app.get('/api/analysis/domains', async (request) => {
     const query = request.query as Record<string, string>

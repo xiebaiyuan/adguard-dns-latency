@@ -1,13 +1,30 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import type { DomainStats, AnalysisSummary } from '../lib/types'
+import type { DomainStats, LatencyStats } from '../lib/types'
 
 const API_BASE = ''
+
+export interface DashboardPayload {
+  ready: boolean
+  timeRange: { start: string; end: string } | null
+  lastUpdated: string | null
+  lastError: string | null
+  adguardUrl: string | null
+  domainCount: number
+  aggregate: {
+    totalCount: number
+    totalCached: number
+    overallCacheRate: number
+    overallUncached: LatencyStats | null
+    overallAll: LatencyStats | null
+  }
+  queryTypeDistribution: Array<{ name: string; value: number }>
+  domains: DomainStats[]
+}
 
 interface UseAnalysisResult {
   loading: boolean
   error: string | null
-  summary: AnalysisSummary | null
-  domains: DomainStats[]
+  data: DashboardPayload | null
   refresh: () => Promise<void>
   refreshing: boolean
 }
@@ -41,30 +58,23 @@ export function useAnalysis(): UseAnalysisResult {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [summary, setSummary] = useState<AnalysisSummary | null>(null)
-  const [domains, setDomains] = useState<DomainStats[]>([])
+  const [data, setData] = useState<DashboardPayload | null>(null)
   const autoRefreshed = useRef(false)
 
-  const fetchData = useCallback(async () => {
+  const fetchDashboard = useCallback(async () => {
     try {
-      const [summaryRes, domainsRes] = await Promise.all([
-        fetch(`${API_BASE}/api/analysis/summary`),
-        fetch(`${API_BASE}/api/analysis/domains?limit=500`),
-      ])
+      const res = await fetch(`${API_BASE}/api/analysis/dashboard`)
+      if (!res.ok) throw new Error(`API error: ${res.status}`)
+      const d = await res.json() as DashboardPayload
 
-      if (!summaryRes.ok || !domainsRes.ok) {
-        throw new Error(`API error: ${summaryRes.status}`)
-      }
-
-      const s = await summaryRes.json() as AnalysisSummary
-      setSummary(s)
-      setDomains(await domainsRes.json())
-
-      if (s.lastError) {
-        setError(s.lastError)
+      // 报告后端记录的错误
+      if (d.lastError) {
+        setError(d.lastError)
       } else {
         setError(null)
       }
+
+      setData(d)
     } catch (e) {
       setError(e instanceof Error ? e.message : '连接后端失败')
     } finally {
@@ -80,12 +90,12 @@ export function useAnalysis(): UseAnalysisResult {
       const res = await fetch(`${API_BASE}/api/analysis/refresh`, { method: 'POST' })
       if (!res.ok) throw new Error(`刷新失败: ${res.status}`)
 
-      // 指数退避轮询：1s → 2s → 2s → 2s, 最多 15 次尝试（取代 30 次固定间隔）
+      // 指数退避轮询：1s → 2s → 2s → 2s, 最多 15 次
       for (let i = 0, wait = 1000; i < 15; i++) {
         await new Promise(r => setTimeout(r, wait))
-        wait = i === 0 ? 2000 : wait  // 首次后降频
+        wait = i === 0 ? 2000 : wait
         const sRes = await fetch(`${API_BASE}/api/analysis/summary`)
-        const s = await sRes.json() as AnalysisSummary
+        const s = await sRes.json() as { ready: boolean; lastError: string | null }
         if (s.lastError) {
           setError(s.lastError)
           setRefreshing(false)
@@ -94,34 +104,34 @@ export function useAnalysis(): UseAnalysisResult {
         if (s.ready) break
       }
 
-      await fetchData()
+      await fetchDashboard()
     } catch (e) {
       setError(e instanceof Error ? e.message : '刷新失败')
       setRefreshing(false)
     }
-  }, [fetchData])
+  }, [fetchDashboard])
 
-  // Initial load: fetch summary, then auto-restore + refresh if configured
+  // Initial load: fetch dashboard, then auto-restore + refresh if configured
   useEffect(() => {
     const init = async () => {
-      await fetchData()
+      await fetchDashboard()
       if (!autoRefreshed.current && localStorage.getItem('adgh_url')) {
         autoRefreshed.current = true
         setLoading(true)
         await autoRefresh()
-        // Wait for refresh to complete with exponential backoff
+        // 轮询等待刷新完成
         for (let i = 0, wait = 1000; i < 15; i++) {
           await new Promise(r => setTimeout(r, wait))
           wait = i === 0 ? 2000 : wait
           const sRes = await fetch(`${API_BASE}/api/analysis/summary`)
-          const s = await sRes.json() as AnalysisSummary
+          const s = await sRes.json() as { ready: boolean; lastError: string | null }
           if (s.ready || s.lastError) break
         }
-        await fetchData()
+        await fetchDashboard()
       }
     }
     init()
-  }, [fetchData])
+  }, [fetchDashboard])
 
-  return { loading, error, summary, domains, refresh: doRefresh, refreshing }
+  return { loading, error, data, refresh: doRefresh, refreshing }
 }
