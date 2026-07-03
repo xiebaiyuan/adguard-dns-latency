@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback, useDeferredValue, memo } from 'react'
 import { MagnifyingGlass, ArrowDown, ArrowUp, CaretDown, CaretUp, Download } from '@phosphor-icons/react'
 import type { DomainStats } from '../lib/types'
 import { exportDomainCsv } from '../lib/csv'
@@ -10,6 +10,13 @@ interface DomainTableProps {
   onExpand?: (domain: string) => void
 }
 
+const cell = 'px-3 py-2.5 text-xs tabular-nums whitespace-nowrap'
+const headerCell = `${cell} cursor-pointer select-none font-medium text-xs uppercase tracking-wider transition-colors hover:opacity-80`
+
+const slowStyle = (v: number) => ({
+  color: v > 1000 ? 'var(--c-danger)' : v > 500 ? 'var(--c-warning)' : 'inherit',
+})
+
 export function DomainTable({ domains }: DomainTableProps) {
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('p95')
@@ -17,9 +24,12 @@ export function DomainTable({ domains }: DomainTableProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [typeFilter, setTypeFilter] = useState<string>('all')
 
+  // 延迟搜索值：键入立即回显，500 行表格的重排序/重渲染滞后且可被后续键入中断
+  const deferredSearch = useDeferredValue(search)
+
   const sorted = useMemo(() =>
-    filterAndSortDomains(domains, search, typeFilter, sortKey, sortDesc),
-  [domains, search, sortKey, sortDesc, typeFilter])
+    filterAndSortDomains(domains, deferredSearch, typeFilter, sortKey, sortDesc),
+  [domains, deferredSearch, sortKey, sortDesc, typeFilter])
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -30,12 +40,14 @@ export function DomainTable({ domains }: DomainTableProps) {
     }
   }
 
-  const toggleExpand = (domain: string) => {
-    const next = new Set(expanded)
-    if (next.has(domain)) next.delete(domain)
-    else next.add(domain)
-    setExpanded(next)
-  }
+  const toggleExpand = useCallback((domain: string) => {
+    setExpanded(prev => {
+      const next = new Set(prev)
+      if (next.has(domain)) next.delete(domain)
+      else next.add(domain)
+      return next
+    })
+  }, [])
 
   const sortArrow = (key: SortKey) => {
     if (sortKey !== key) return null
@@ -50,13 +62,6 @@ export function DomainTable({ domains }: DomainTableProps) {
     }
     return ['all', ...Array.from(types).sort()]
   }, [domains])
-
-  const cell = 'px-3 py-2.5 text-xs tabular-nums whitespace-nowrap'
-  const headerCell = `${cell} cursor-pointer select-none font-medium text-xs uppercase tracking-wider transition-colors hover:opacity-80`
-
-  const slowStyle = (v: number) => ({
-    color: v > 1000 ? 'var(--c-danger)' : v > 500 ? 'var(--c-warning)' : 'inherit',
-  })
 
   return (
     <div className="glass-card rounded-xl">
@@ -139,12 +144,7 @@ export function DomainTable({ domains }: DomainTableProps) {
                 key={d.domain}
                 stats={d}
                 expanded={expanded.has(d.domain)}
-                onToggle={() => toggleExpand(d.domain)}
-                fmtMs={fmtMs}
-                fmtPct={fmtPct}
-                fmtCount={fmtCount}
-                slowStyle={slowStyle}
-                cell={cell}
+                onToggle={toggleExpand}
               />
             ))}
             {sorted.length === 0 && (
@@ -317,31 +317,23 @@ function ExpandedDetail({ domain }: { domain: string }) {
   )
 }
 
-function TableRow({
+// 行组件 memo 化：搜索/排序引发的全表重渲染中，props 未变的行直接跳过。
+// onToggle 接收 domain 参数（useCallback 稳定引用），避免每行内联闭包破坏 memo。
+const TableRow = memo(function TableRow({
   stats: d,
   expanded,
   onToggle,
-  fmtMs,
-  fmtPct,
-  fmtCount,
-  slowStyle,
-  cell,
 }: {
   stats: DomainStats
   expanded: boolean
-  onToggle: () => void
-  fmtMs: (n: number) => string
-  fmtPct: (n: number) => string
-  fmtCount: (n: number) => string
-  slowStyle: (v: number) => Record<string, string>
-  cell: string
+  onToggle: (domain: string) => void
 }) {
   return (
     <>
       <tr
         className="cursor-pointer table-row-hover"
         style={{ borderBottom: '1px solid var(--c-border)' }}
-        onClick={onToggle}
+        onClick={() => onToggle(d.domain)}
       >
         <td className={cell}>
           {expanded ? <CaretUp size={14} /> : <CaretDown size={14} />}
@@ -381,4 +373,4 @@ function TableRow({
       )}
     </>
   )
-}
+})

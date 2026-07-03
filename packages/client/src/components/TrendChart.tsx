@@ -7,10 +7,10 @@ interface TrendChartProps {
 }
 
 export function TrendChart({ history, timeUnit }: TrendChartProps) {
-  if (!history || history.length === 0) return null
-
   const unitLabel = timeUnit === 'days' ? '天' : timeUnit
   const chartData = useMemo(() => history.map((h, i) => ({ ...h, index: i })), [history])
+
+  if (!history || history.length === 0) return null
 
   return (
     <div className="glass-card rounded-xl p-4 sm:p-6">
@@ -53,3 +53,5 @@ export function TrendChart({ history, timeUnit }: TrendChartProps) {
     </div>
   )
 }
+
+export default TrendChart
