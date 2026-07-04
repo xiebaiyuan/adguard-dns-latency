@@ -168,6 +168,7 @@ export function DomainTable({ domains }: DomainTableProps) {
 
 // Individual row with optional expanded detail
 function ExpandedDetail({ domain, topClients, topBlockRules }: { domain: string; topClients: DomainStats['topClients']; topBlockRules: DomainStats['topBlockRules'] }) {
+  const { t } = useI18n()
   const [data, setData] = useState<{ domain: string; entries: Array<{ time: string; type: string; answer: Array<{ type: string; value: string; ttl: number }>; elapsedMs: number; cached: boolean; upstream: string; status: string }>; upstreams: Array<{ upstream: string; count: number; avg: number }> } | null>(null)
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState(false)
@@ -284,7 +285,7 @@ function ExpandedDetail({ domain, topClients, topBlockRules }: { domain: string;
                   {data.upstreams.map(u => (
                     <div key={u.upstream} className="flex items-center gap-3">
                       <span className="max-w-[200px] truncate font-mono text-[11px]">{u.upstream}</span>
-                      <span style={{ color: 'var(--c-text-secondary)' }}>{u.count} 次</span>
+                      <span style={{ color: 'var(--c-text-secondary)' }}>{u.count} {t('domain.times')}</span>
                       <span style={{ color: 'var(--c-text-secondary)' }}>均 {u.avg}ms</span>
                     </div>
                   ))}
@@ -305,7 +306,7 @@ function ExpandedDetail({ domain, topClients, topBlockRules }: { domain: string;
                           <span className="text-[10px]" style={{ color: 'var(--c-text-secondary)' }}>({c.name})</span>
                         )}
                       </span>
-                      <span style={{ color: 'var(--c-text-secondary)' }}>{c.count} 次</span>
+                      <span style={{ color: 'var(--c-text-secondary)' }}>{c.count} {t('domain.times')}</span>
                     </div>
                   ))}
                 </div>

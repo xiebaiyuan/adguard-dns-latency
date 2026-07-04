@@ -129,7 +129,7 @@ export function Dashboard() {
               onChange={e => { setShowStatsPanel(e.target.checked); localStorage.setItem('panel_stats', String(e.target.checked)) }}
               className="hidden"
             />
-            统计
+            {t('btn.statsToggle')}
           </label>
           {/* Protection toggle — 始终占位 */}
           <div className="inline-flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1.5 transition-colors" style={{ color: adguard.status?.protectionEnabled ? 'var(--c-success)' : 'var(--c-text-secondary)', minWidth: '70px', visibility: adguard.status ? 'visible' : 'hidden' }}>
