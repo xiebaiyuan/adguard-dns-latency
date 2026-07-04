@@ -5,3 +5,5 @@ dist/
 *.log
 *.tsbuildinfo
 .DS_Store
+.idea/
+.codegraph/

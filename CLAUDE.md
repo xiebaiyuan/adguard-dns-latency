@@ -68,13 +68,13 @@ Monorepo with npm workspaces across three packages:
   - `adguard/fetcher.ts`: Orchestrates fetch → analyze → group-by-domain pipeline
   - Cached results in process memory; cache invalidates on config change or manual refresh
 
-- **`packages/client/`** — Vite + React SPA (shadcn/ui + Tailwind v4 + Recharts)
+- **`packages/client/`** — Vite + React SPA (Tailwind v4 + Recharts + Phosphor Icons)
   - Custom CSS color system (glassmorphism, oklch colors, dark/light mode)
   - `hooks/useAnalysis.ts`: Data fetching lifecycle — auto-restore last config, exponential backoff polling (1s→2s→2s...), renders all sections as always-mounted (CSS hidden when collapsed)
   - `hooks/useAdguard.ts`: AdGuardHome management API proxy (protection toggle, filters, rewrites)
   - Components mounted from page load; CollapseSection uses `display:none` instead of conditional mount to avoid unmount/remount jank
   - `lib/format.ts`: Server-free sorting/filtering of domain stats on the client
-  - Bundle manually chunked: vendor / vendor-charts / vendor-icons / app
+  - Bundle manually chunked: vendor / vendor-icons / app (version injected via Vite `define`)
 
 - **`shared/`** — TypeScript types shared between frontend and backend
   - `QueryLogEntry` (raw AdGuardHome query)
@@ -88,7 +88,7 @@ Monorepo with npm workspaces across three packages:
 2. **User clicks refresh** → `POST /api/analysis/refresh` → backend fetches query log via cursor pagination → `analyze()` groups by domain → caches result in memory (async, 202 Accepted)
 3. **Frontend polls** `GET /api/analysis/summary` with exponential backoff until `ready: true`
 4. **Frontend renders** by calling `GET /api/analysis/domains?limit=500` — all sorting/filtering happens in `lib/format.ts` on the client
-5. **Domain drill-down** → `GET /api/analysis/domains/:domain` (upstream breakdown + recent entries)
+5. **Domain drill-down** → `GET /api/analysis/domain-detail?domain=...` (client sources, block rules, upstream breakdown + recent entries)
 
 ## Analysis Engine (src/analyze.ts)
 
