@@ -73,7 +73,7 @@ export function LatencyChart({ domains }: LatencyChartProps) {
     <div className="glass-card rounded-xl p-4 sm:p-6">
       <div className="mb-3 flex items-center gap-2">
         <div className="h-3 w-1 rounded-full" style={{ background: 'var(--c-accent)' }} />
-        <h3 className="text-sm font-semibold" style={{ textWrap: 'balance' }}>域名延时分布</h3>
+        <h3 className="text-sm font-semibold" style={{ textWrap: 'balance' }}>{t('section.latency')}</h3>
         <span className="text-xs" style={{ color: 'var(--c-text-secondary)' }}>
           {total} {t('domain.count')} · {fastPct}% {t('trend.fast')}
         </span>
