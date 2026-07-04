@@ -116,6 +116,10 @@ Click any domain row to expand a detailed view:
 
 All data comes from [AdGuard Home](https://github.com/AdguardTeam/AdGuardHome) — an excellent open-source network-wide ad and tracker blocker.
 
+## Friends
+
+[Linux.Do](https://linux.do/) — A vibrant Linux & open-source community. Everyone is welcome!
+
 ## License
 
 MIT

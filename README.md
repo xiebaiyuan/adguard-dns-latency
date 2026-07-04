@@ -110,6 +110,10 @@ docker run -d --name adguard-dns-latency \
 
 数据来自 [AdGuardHome](https://github.com/AdguardTeam/AdGuardHome) 查询日志 API。
 
+## 友情链接
+
+[Linux.Do](https://linux.do/) — 优秀的 Linux 与开源社区，欢迎大家加入。
+
 ## 许可证
 
 MIT
