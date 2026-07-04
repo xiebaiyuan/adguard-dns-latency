@@ -137,7 +137,7 @@ export function Dashboard() {
                 <button
                   onClick={() => adguard.toggleProtection(!prot)}
                   disabled={adguard.saving === 'protection'}
-                  className="inline-flex cursor-pointer items-center gap-1 text-[10px] font-medium uppercase tracking-wider disabled:opacity-60"
+                  className="inline-flex cursor-pointer items-center gap-1 text-[10px] font-medium uppercase tracking-wider press-effect disabled:opacity-60"
                   style={{
                     background: 'transparent',
                     color: prot ? 'var(--c-success)' : 'var(--c-danger)',
@@ -154,7 +154,7 @@ export function Dashboard() {
           <button
             onClick={() => adguard.clearCache()}
             disabled={adguard.saving === 'cache'}
-            className="glass-card inline-flex cursor-pointer items-center justify-center rounded-lg p-1.5 transition-colors disabled:opacity-40"
+            className="glass-card inline-flex cursor-pointer items-center justify-center rounded-lg p-1.5 press-effect disabled:opacity-40"
             style={{ color: 'var(--c-text-secondary)' }}
             title="清除 DNS 缓存"
           >
@@ -163,7 +163,7 @@ export function Dashboard() {
           {/* Open management */}
           <button
             onClick={() => setShowManagement(true)}
-            className="glass-card inline-flex cursor-pointer items-center justify-center rounded-lg p-1.5 transition-colors"
+            className="glass-card inline-flex cursor-pointer items-center justify-center rounded-lg p-1.5 press-effect"
             style={{ color: 'var(--c-text-secondary)' }}
             title="AdGuardHome 管理（规则/安全/维护）"
           >
@@ -171,7 +171,7 @@ export function Dashboard() {
           </button>
           <button
             onClick={() => setShowSettings(true)}
-            className="glass-card inline-flex cursor-pointer items-center justify-center rounded-lg p-1.5 transition-colors"
+            className="glass-card inline-flex cursor-pointer items-center justify-center rounded-lg p-1.5 press-effect"
             style={{ color: 'var(--c-text-secondary)' }}
             title="配置 AdGuardHome 连接"
           >
@@ -180,7 +180,7 @@ export function Dashboard() {
           <button
             onClick={handleExport}
             disabled={!domains.length}
-            className="glass-card inline-flex cursor-pointer items-center justify-center rounded-lg p-1.5 transition-colors disabled:opacity-40"
+            className="glass-card inline-flex cursor-pointer items-center justify-center rounded-lg p-1.5 press-effect disabled:opacity-40"
             style={{ color: 'var(--c-text-secondary)' }}
             title="导出 CSV"
           >
@@ -190,7 +190,7 @@ export function Dashboard() {
           <button
             onClick={refresh}
             disabled={refreshing}
-            className="glass-card inline-flex cursor-pointer items-center justify-center rounded-lg p-1.5 transition-colors disabled:opacity-40"
+            className="glass-card inline-flex cursor-pointer items-center justify-center rounded-lg p-1.5 press-effect disabled:opacity-40"
             style={{ color: 'var(--c-accent)' }}
             title="刷新分析数据"
           >
@@ -202,12 +202,12 @@ export function Dashboard() {
       {/* KPI Cards — 数据来自后端预聚合 */}
       <div className="mb-6">
         <div className="mb-3 flex items-center gap-2">
-          <span className="text-sm font-medium" style={{ color: 'var(--c-text)' }}>分析概览</span>
+          <span className="text-sm font-semibold" style={{ color: 'var(--c-text)', textWrap: 'balance' }}>分析概览</span>
           {data?.timeRange?.start && (
             <div className="relative" ref={timePickerRef}>
               <button
                 onClick={() => setShowTimePicker(!showTimePicker)}
-                className="cursor-pointer rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider transition-colors hover:opacity-80"
+                className="cursor-pointer rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider press-effect-soft transition-colors hover:opacity-80"
                 style={{ background: 'oklch(0.55 0.18 150 / 0.1)', color: 'var(--c-success)' }}
               >
                 {(() => {

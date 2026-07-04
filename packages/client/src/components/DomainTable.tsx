@@ -11,7 +11,7 @@ interface DomainTableProps {
 }
 
 const cell = 'px-3 py-2.5 text-xs tabular-nums whitespace-nowrap'
-const headerCell = `${cell} cursor-pointer select-none font-medium text-xs uppercase tracking-wider transition-colors hover:opacity-80`
+const headerCell = `${cell} cursor-pointer select-none font-medium text-xs uppercase tracking-wider press-effect-soft`
 
 const slowStyle = (v: number) => ({
   color: v > 1000 ? 'var(--c-danger)' : v > 500 ? 'var(--c-warning)' : 'inherit',
@@ -69,7 +69,7 @@ export function DomainTable({ domains }: DomainTableProps) {
       <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3" style={{ borderColor: 'var(--c-border)' }}>
         <div className="flex items-center gap-2">
           <div className="h-3 w-1 rounded-full" style={{ background: 'var(--c-accent)' }} />
-          <h3 className="text-sm font-medium">
+          <h3 className="text-sm font-semibold" style={{ textWrap: 'balance' }}>
             域名延时排行
           </h3>
           <span className="ml-1 text-xs" style={{ color: 'var(--c-text-secondary)' }}>

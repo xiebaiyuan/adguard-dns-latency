@@ -1,6 +1,16 @@
+/* ── 字体 ── */
+@import '@fontsource-variable/outfit';
+@import '@fontsource-variable/jetbrains-mono';
+
+/* ── Tailwind v4 ── */
 @import "tailwindcss";
 
-/* Dashboard color system — glass data-panel style */
+@theme {
+  --font-sans: 'Outfit Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, monospace;
+}
+
+/* ── Dashboard color system — glass data-panel style ── */
 :root {
   --c-bg: oklch(0.975 0.005 260);
   --c-bg-elevated: oklch(0.995 0 0);
@@ -15,6 +25,7 @@
   --c-success: oklch(0.55 0.18 150);
   --c-warning: oklch(0.68 0.16 75);
   --c-danger: oklch(0.58 0.22 27);
+  --c-glass-shadow: 0 1px 3px oklch(0 0 0 / 0.04), 0 1px 2px oklch(0 0 0 / 0.02);
   color-scheme: light;
 }
 
@@ -32,12 +43,14 @@
   --c-success: oklch(0.7 0.17 150);
   --c-warning: oklch(0.78 0.18 70);
   --c-danger: oklch(0.72 0.19 27);
+  --c-glass-shadow: 0 1px 3px oklch(0 0 0 / 0.25), 0 1px 2px oklch(0 0 0 / 0.15);
   color-scheme: dark;
 }
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
   background: var(--c-bg);
   color: var(--c-text);
   transition: background-color 0.3s ease, color 0.2s ease;
@@ -49,20 +62,44 @@ body {
   min-height: 100dvh;
 }
 
-/* Glass card utility */
+/* ── Glass card utility ── */
 .glass-card {
   background: var(--c-glass);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--c-glass-border);
-  box-shadow: 0 1px 3px oklch(0 0 0 / 0.04), 0 1px 2px oklch(0 0 0 / 0.02);
+  box-shadow: var(--c-glass-shadow);
 }
 
-.dark .glass-card {
-  box-shadow: 0 1px 3px oklch(0 0 0 / 0.2), 0 1px 2px oklch(0 0 0 / 0.1);
+/* ── 按下反馈 ── */
+.press-effect {
+  transition: transform 0.12s ease, opacity 0.12s ease;
 }
 
-/* Accent gradient text */
+.press-effect:active {
+  transform: scale(0.97);
+}
+
+.press-effect-soft:active {
+  transform: scale(0.985);
+}
+
+/* ── 聚焦态 ── */
+*:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  border-color: var(--c-accent) !important;
+  box-shadow: 0 0 0 2px var(--c-accent-soft);
+}
+
+/* ── Accent gradient text ── */
 .gradient-text {
   background: var(--c-accent-gradient);
   -webkit-background-clip: text;
@@ -70,7 +107,7 @@ body {
   background-clip: text;
 }
 
-/* Subtle row hover */
+/* ── Table row hover ── */
 .table-row-hover {
   transition: background-color 0.12s ease;
 }
@@ -79,7 +116,7 @@ body {
   background: var(--c-accent-soft);
 }
 
-/* KPI card gradient accent */
+/* ── KPI card gradient accent ── */
 .kpi-gradient-1 {
   background: linear-gradient(135deg, oklch(0.55 0.22 260 / 0.08), oklch(0.55 0.22 260 / 0.02));
 }
@@ -93,7 +130,7 @@ body {
   background: linear-gradient(135deg, oklch(0.58 0.22 27 / 0.08), oklch(0.58 0.22 27 / 0.02));
 }
 
-/* Type dot indicator */
+/* ── Type dot indicator ── */
 .type-dot {
   display: inline-block;
   width: 6px;
@@ -102,7 +139,7 @@ body {
   margin-right: 4px;
 }
 
-/* Animations */
+/* ── Animations ── */
 @keyframes fadeSlideUp {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -112,7 +149,7 @@ body {
   animation: fadeSlideUp 0.3s ease-out;
 }
 
-/* 内容淡入 — 无骨架屏，首次渲染时平滑出现 */
+/* 内容淡入 */
 @keyframes fadeInContent {
   0% { opacity: 0; }
   100% { opacity: 1; }
@@ -138,7 +175,7 @@ body {
   animation: shimmer 2s ease-in-out infinite;
 }
 
-/* Scrollbar subtle */
+/* ── Scrollbar subtle ── */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

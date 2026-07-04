@@ -27,7 +27,7 @@ export function Header() {
         <div className="flex items-center gap-1.5">
           <button
             onClick={() => setTheme(resolved === 'dark' ? 'light' : 'dark')}
-            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors"
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg press-effect transition-colors"
             style={{ color: 'var(--c-text-secondary)' }}
             onMouseEnter={e => (e.currentTarget.style.background = 'var(--c-accent-soft)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}

@@ -23,9 +23,10 @@ export function CollapseSection({ title, storageKey, defaultOpen, children, badg
     <div className="mb-6">
       <button
         onClick={toggle}
-        className="mb-3 flex w-full cursor-pointer items-center gap-2 text-left outline-none"
+        className="mb-3 flex w-full cursor-pointer items-center gap-2 text-left outline-none press-effect-soft rounded-lg px-1 -ml-1"
+        style={{ textWrap: 'balance' }}
       >
-        <span className="text-sm font-medium" style={{ color: 'var(--c-text)' }}>{title}</span>
+        <span className="text-sm font-semibold" style={{ color: 'var(--c-text)' }}>{title}</span>
         {badge}
         <span className="ml-auto" style={{ color: 'var(--c-text-secondary)' }}>
           {open ? <CaretUp size={14} /> : <CaretDown size={14} />}

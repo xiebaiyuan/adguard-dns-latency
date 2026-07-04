@@ -16,7 +16,7 @@ function Card({ title, icon, children, ready }: {
 }) {
   return (
     <div className="glass-card rounded-xl p-4" style={{ minHeight: '140px' }}>
-      <h4 className="mb-3 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--c-text-secondary)' }}>
+      <h4 className="mb-3 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--c-text-secondary)' }}>
         {icon}{title}
       </h4>
       <div style={{

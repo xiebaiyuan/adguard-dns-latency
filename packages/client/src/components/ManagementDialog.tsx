@@ -51,7 +51,7 @@ export function ManagementDialog({ open, onClose }: ManagementDialogProps) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto p-4 pt-8 sm:pt-16"
-      style={{ background: 'oklch(0 0 0 / 0.4)' }}
+      style={{ background: 'oklch(0 0 0 / 0.4)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}
     >
       <div
@@ -71,7 +71,7 @@ export function ManagementDialog({ open, onClose }: ManagementDialogProps) {
           </div>
           <button
             onClick={onClose}
-            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg transition-colors hover:opacity-60"
+            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg press-effect transition-colors hover:opacity-60"
             style={{ color: 'var(--c-text-secondary)' }}
           >
             <X size={16} />
@@ -120,7 +120,7 @@ export function ManagementDialog({ open, onClose }: ManagementDialogProps) {
                   <button
                     onClick={handleSaveRules}
                     disabled={saving === 'rules'}
-                    className="mt-2 cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium text-white transition-opacity disabled:opacity-60"
+                    className="mt-2 cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium text-white press-effect transition-opacity disabled:opacity-60"
                     style={{ background: 'var(--c-accent-gradient)', border: 'none' }}
                   >
                     {saving === 'rules' ? '保存中...' : '保存规则'}
@@ -146,7 +146,7 @@ export function ManagementDialog({ open, onClose }: ManagementDialogProps) {
                             <button onClick={async () => {
                               if (f.url) { await updateFilterUrl(f.url, editUrl, editName); setEditingFilter(null) }
                             }} disabled={saving === 'filter'}
-                              className="cursor-pointer rounded px-2 py-1 text-white"
+                              className="cursor-pointer rounded px-2 py-1 text-white press-effect"
                               style={{ background: 'var(--c-accent)' }}>保存</button>
                             <button onClick={() => setEditingFilter(null)}
                               className="cursor-pointer rounded px-2 py-1"
@@ -220,7 +220,7 @@ export function ManagementDialog({ open, onClose }: ManagementDialogProps) {
                           setFilterUrl('')
                         }}
                         disabled={saving === 'filter' || !filterName || !filterUrl}
-                        className="flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-opacity disabled:opacity-40"
+                        className="flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium press-effect transition-opacity disabled:opacity-40"
                         style={{ background: 'var(--c-accent-soft)', color: 'var(--c-accent)', border: 'none' }}
                       >
                         <Plus size={12} />
@@ -271,7 +271,7 @@ export function ManagementDialog({ open, onClose }: ManagementDialogProps) {
                   <button
                     onClick={handleAddRewrite}
                     disabled={!rewriteDomain || !rewriteAnswer}
-                    className="flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium transition-opacity disabled:opacity-40"
+                    className="flex cursor-pointer items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium press-effect transition-opacity disabled:opacity-40"
                     style={{ background: 'var(--c-accent-soft)', color: 'var(--c-accent)', border: 'none' }}
                   >
                     <Plus size={12} />
@@ -285,7 +285,7 @@ export function ManagementDialog({ open, onClose }: ManagementDialogProps) {
                   <button
                     onClick={resetStats}
                     disabled={saving === 'reset'}
-                    className="inline-flex cursor-pointer items-center gap-1 rounded-lg border px-3 py-1.5 text-xs transition-colors disabled:opacity-40"
+                    className="inline-flex cursor-pointer items-center gap-1 rounded-lg border px-3 py-1.5 text-xs press-effect transition-colors disabled:opacity-40"
                     style={{ borderColor: 'var(--c-border)', color: 'var(--c-text)' }}
                   >
                     <Trash size={12} />
@@ -294,7 +294,7 @@ export function ManagementDialog({ open, onClose }: ManagementDialogProps) {
                   <button
                     onClick={clearLog}
                     disabled={saving === 'clear'}
-                    className="inline-flex cursor-pointer items-center gap-1 rounded-lg border px-3 py-1.5 text-xs transition-colors disabled:opacity-40"
+                    className="inline-flex cursor-pointer items-center gap-1 rounded-lg border px-3 py-1.5 text-xs press-effect transition-colors disabled:opacity-40"
                     style={{ borderColor: 'var(--c-border)', color: 'var(--c-danger)' }}
                   >
                     <Trash size={12} />

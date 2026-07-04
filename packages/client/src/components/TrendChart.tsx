@@ -28,7 +28,7 @@ export function TrendChart({ history, timeUnit }: TrendChartProps) {
     <div className="glass-card rounded-xl p-4 sm:p-6">
       <div className="mb-3 flex items-center gap-2">
         <div className="h-3 w-1 rounded-full" style={{ background: 'var(--c-accent)' }} />
-        <h3 className="text-sm font-medium">查询趋势</h3>
+        <h3 className="text-sm font-semibold" style={{ textWrap: 'balance' }}>查询趋势</h3>
         <span className="text-xs" style={{ color: 'var(--c-text-secondary)' }}>
           最近 {chartData.length} {unitLabel}{skipped > 0 && `（前 ${skipped} ${unitLabel}无数据已省略）`}
         </span>

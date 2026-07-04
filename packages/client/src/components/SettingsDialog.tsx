@@ -129,7 +129,7 @@ export function SettingsDialog({ open, onClose, onConfigured }: SettingsDialogPr
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'oklch(0 0 0 / 0.4)' }}
+      style={{ background: 'oklch(0 0 0 / 0.4)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}
     >
       <div
@@ -143,7 +143,7 @@ export function SettingsDialog({ open, onClose, onConfigured }: SettingsDialogPr
           </div>
           <button
             onClick={onClose}
-            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg transition-colors hover:opacity-60"
+            className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg press-effect transition-colors hover:opacity-60"
             style={{ color: 'var(--c-text-secondary)' }}
           >
             <X size={16} />
@@ -259,7 +259,7 @@ export function SettingsDialog({ open, onClose, onConfigured }: SettingsDialogPr
           <button
             onClick={handleSave}
             disabled={saving}
-            className="w-full cursor-pointer rounded-lg py-2 text-sm font-medium text-white transition-opacity disabled:opacity-60"
+            className="w-full cursor-pointer rounded-lg py-2 text-sm font-medium text-white press-effect transition-opacity disabled:opacity-60"
             style={{ background: 'var(--c-accent-gradient)', border: 'none' }}
           >
             {saving ? '保存中...' : '保存并连接'}

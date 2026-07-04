@@ -1,7 +1,10 @@
 {
   "name": "adguardhome-dns-latency",
   "private": true,
-  "workspaces": ["packages/*", "shared"],
+  "workspaces": [
+    "packages/*",
+    "shared"
+  ],
   "scripts": {
     "dev": "concurrently --names server,dash --prefix-colors blue,green \"npm run dev -w @adgh/server\" \"npm run dev -w @adgh/dashboard\"",
     "build": "npm run build -w @adgh/server && npm run build -w @adgh/dashboard",
@@ -9,5 +12,9 @@
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
+  },
+  "dependencies": {
+    "@fontsource-variable/jetbrains-mono": "^5.2.8",
+    "@fontsource-variable/outfit": "^5.2.8"
   }
 }
