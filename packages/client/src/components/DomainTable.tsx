@@ -4,6 +4,7 @@ import type { DomainStats } from '../lib/types'
 import { exportDomainCsv } from '../lib/csv'
 import { fmtMs, fmtPct, fmtCount, filterAndSortDomains } from '../lib/format'
 import type { SortKey } from '../lib/format'
+import { useI18n } from '../lib/i18n'
 
 interface DomainTableProps {
   domains: DomainStats[]
@@ -18,6 +19,7 @@ const slowStyle = (v: number) => ({
 })
 
 export function DomainTable({ domains }: DomainTableProps) {
+  const { t } = useI18n()
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('p95')
   const [sortDesc, setSortDesc] = useState(true)
@@ -70,10 +72,10 @@ export function DomainTable({ domains }: DomainTableProps) {
         <div className="flex items-center gap-2">
           <div className="h-3 w-1 rounded-full" style={{ background: 'var(--c-accent)' }} />
           <h3 className="text-sm font-semibold" style={{ textWrap: 'balance' }}>
-            域名延时排行
+            {t('section.domainRank')}
           </h3>
           <span className="ml-1 text-xs" style={{ color: 'var(--c-text-secondary)' }}>
-            {sorted.length} 个域名
+            {sorted.length} {t('domain.count')}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -83,15 +85,15 @@ export function DomainTable({ domains }: DomainTableProps) {
             className="rounded-lg border px-2 py-1.5 text-xs outline-none transition-colors"
             style={{ borderColor: 'var(--c-border)', background: 'var(--c-glass)', color: 'var(--c-text)' }}
           >
-            {allTypes.map(t => (
-              <option key={t} value={t}>{t === 'all' ? '所有类型' : t}</option>
+            {allTypes.map(type => (
+              <option key={type} value={type}>{type === 'all' ? t('domain.allTypes') : type}</option>
             ))}
           </select>
           <div className="relative">
             <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--c-text-secondary)' }} />
             <input
               type="text"
-              placeholder="搜索域名..."
+              placeholder={t('domain.search')}
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="w-40 rounded-lg border py-1.5 pl-8 pr-3 text-xs outline-none transition-all focus:w-56"
@@ -112,15 +114,15 @@ export function DomainTable({ domains }: DomainTableProps) {
             <tr style={{ borderBottom: '1px solid var(--c-border)' }}>
               <th className={cell}></th>
               <th className={headerCell} onClick={() => toggleSort('domain')}>
-                <span className="inline-flex items-center gap-1">域名 {sortArrow('domain')}</span>
+                <span className="inline-flex items-center gap-1">{t('table.domain')} {sortArrow('domain')}</span>
               </th>
-              <th className={cell}>类型</th>
+              <th className={cell}>{t('table.type')}</th>
               <th className={headerCell} onClick={() => toggleSort('totalCount')}>
-                <span className="inline-flex items-center gap-1">次数 {sortArrow('totalCount')}</span>
+                <span className="inline-flex items-center gap-1">{t('table.count')} {sortArrow('totalCount')}</span>
               </th>
-              <th className={cell}>缓存率</th>
+              <th className={cell}>{t('table.cacheRate')}</th>
               <th className={headerCell} onClick={() => toggleSort('blockedCount')}>
-                <span className="inline-flex items-center gap-1">拦截 {sortArrow('blockedCount')}</span>
+                <span className="inline-flex items-center gap-1">{t('table.blocked')} {sortArrow('blockedCount')}</span>
               </th>
               <th className={headerCell} onClick={() => toggleSort('p50')}>
                 <span className="inline-flex items-center gap-1">P50 {sortArrow('p50')}</span>
@@ -136,7 +138,7 @@ export function DomainTable({ domains }: DomainTableProps) {
               </th>
               <th className={cell}>P99</th>
               <th className={headerCell} onClick={() => toggleSort('slowRate')}>
-                <span className="inline-flex items-center gap-1">慢查询 {sortArrow('slowRate')}</span>
+                <span className="inline-flex items-center gap-1">{t('table.slowQuery')} {sortArrow('slowRate')}</span>
               </th>
               <th className={cell}>MAX</th>
             </tr>
@@ -153,7 +155,7 @@ export function DomainTable({ domains }: DomainTableProps) {
             {sorted.length === 0 && (
               <tr>
                 <td colSpan={13} className="py-12 text-center text-xs" style={{ color: 'var(--c-text-secondary)' }}>
-                  {search ? `没有域名匹配 "${search}"` : '暂无数据，请先刷新'}
+                  {search ? `${t('domain.noMatch')} "${search}"` : t('domain.noData')}
                 </td>
               </tr>
             )}

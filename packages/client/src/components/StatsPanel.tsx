@@ -2,6 +2,7 @@ import { useState, useEffect, lazy, Suspense } from 'react'
 import { ClockCounterClockwise, Users, ShieldCheck } from '@phosphor-icons/react'
 import type { AdguardStats } from '../lib/types'
 import { fmtPreciseMs } from '../lib/format'
+import { useI18n } from '../lib/i18n'
 
 // 图表组件懒加载：recharts (~65KB gz) 只在图表实际显示时才下载
 const PieChartCard = lazy(() => import('./PieChartCard'))
@@ -38,6 +39,7 @@ export function StatsPanel({ onRefreshNeeded, queryTypeDistribution }: {
   const [loading, setLoading] = useState(true)
   const [_error, setError] = useState<string | null>(null)
   const [showCharts, setShowCharts] = useState(false)
+  const { t } = useI18n()
 
   useEffect(() => {
     let cancelled = false
@@ -59,8 +61,8 @@ export function StatsPanel({ onRefreshNeeded, queryTypeDistribution }: {
 
   const ready = !loading && stats !== null
   const blockedRatio = ready ? [
-    { name: '已屏蔽', value: stats!.totalBlocked },
-    { name: '已放行', value: stats!.totalQueries },
+    { name: t('stats.blocked'), value: stats!.totalBlocked },
+    { name: t('stats.allowed'), value: stats!.totalQueries },
   ] : []
 
   return (
@@ -68,22 +70,22 @@ export function StatsPanel({ onRefreshNeeded, queryTypeDistribution }: {
 
       {/* ── KPI 行 ── 永久 4 卡片，数据到了淡入数字 ── */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Card title="平均处理" icon={<ClockCounterClockwise size={14} />} ready={ready}>
+        <Card title={t('stats.avgProcess')} icon={<ClockCounterClockwise size={14} />} ready={ready}>
           <div className="text-xl font-semibold tabular-nums gradient-text" style={{ minHeight: '1.5rem' }}>
             {ready ? fmtPreciseMs(stats!.avgProcessingTime * 1000) : '—'}
           </div>
         </Card>
-        <Card title="上游服务数" icon={<span className="h-2 w-2 rounded-full" style={{ background: 'var(--c-accent)' }} />} ready={ready}>
+        <Card title={t('stats.upstreams')} icon={<span className="h-2 w-2 rounded-full" style={{ background: 'var(--c-accent)' }} />} ready={ready}>
           <div className="text-xl font-semibold tabular-nums gradient-text" style={{ minHeight: '1.5rem' }}>
             {ready ? stats!.topUpstreams.length : '—'}
           </div>
         </Card>
-        <Card title="已屏蔽" icon={<ShieldCheck size={14} />} ready={ready}>
+        <Card title={t('stats.blocked')} icon={<ShieldCheck size={14} />} ready={ready}>
           <div className="text-xl font-semibold tabular-nums" style={{ minHeight: '1.5rem', color: ready ? 'var(--c-danger)' : 'inherit' }}>
             {ready ? <>{stats!.totalBlocked.toLocaleString()}<span className="ml-1 text-sm font-normal" style={{ color: 'var(--c-text-secondary)' }}>({((stats!.totalBlocked / (stats!.totalQueries + stats!.totalBlocked)) * 100).toFixed(1)}%)</span></> : '—'}
           </div>
         </Card>
-        <Card title="客户端数" icon={<Users size={14} />} ready={ready}>
+        <Card title={t('stats.clients')} icon={<Users size={14} />} ready={ready}>
           <div className="text-xl font-semibold tabular-nums gradient-text" style={{ minHeight: '1.5rem' }}>
             {ready ? stats!.topClients.length : '—'}
           </div>
@@ -92,21 +94,21 @@ export function StatsPanel({ onRefreshNeeded, queryTypeDistribution }: {
 
       {/* ── 图表行 ── 3 列，图表未就绪时 Card 占位，就绪后 PieChartCard 直接渲染（它自带 glass-card） ── */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card title="屏蔽比例" ready={showCharts}>
+        <Card title={t('stats.blockRate')} ready={showCharts}>
           {showCharts ? (
             <Suspense fallback={<div style={{ minHeight: '7rem' }} />}>
               <PieChartCard data={blockedRatio} />
             </Suspense>
           ) : <div style={{ minHeight: '7rem' }} />}
         </Card>
-        <Card title="查询类型分布" ready={showCharts && !!queryTypeDistribution?.length}>
+        <Card title={t('stats.typeDist')} ready={showCharts && !!queryTypeDistribution?.length}>
           {showCharts && queryTypeDistribution?.length ? (
             <Suspense fallback={<div style={{ minHeight: '7rem' }} />}>
               <PieChartCard data={queryTypeDistribution} />
             </Suspense>
           ) : <div style={{ minHeight: '7rem' }} />}
         </Card>
-        <Card title="客户端排行 (Top 6)" ready={showCharts && !!stats?.topClients.length}>
+        <Card title={t('stats.clientRank')} ready={showCharts && !!stats?.topClients.length}>
           {showCharts && stats?.topClients.length ? (
             <Suspense fallback={<div style={{ minHeight: '7rem' }} />}>
               <PieChartCard data={stats!.topClients.map(c => ({ name: c.name || c.ip, value: c.count }))} />
@@ -118,7 +120,7 @@ export function StatsPanel({ onRefreshNeeded, queryTypeDistribution }: {
       {/* ── 表格行 ── 3 列始终存在 ── */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* 客户端排行 */}
-        <Card title="客户端排行" icon={<Users size={14} className="mr-1 inline" />} ready={ready}>
+        <Card title={t('stats.clientRank')} icon={<Users size={14} className="mr-1 inline" />} ready={ready}>
           <div className="space-y-1">
             {ready && stats!.topClients.length > 0 ? stats!.topClients.map((c, i) => (
               <div key={c.ip} className="flex items-center gap-2 text-xs">
@@ -133,7 +135,7 @@ export function StatsPanel({ onRefreshNeeded, queryTypeDistribution }: {
         </Card>
 
         {/* 屏蔽域名排行 */}
-        <Card title="屏蔽域名排行" icon={<ShieldCheck size={14} className="mr-1 inline" />} ready={ready}>
+        <Card title={t('stats.blockDomainRank')} icon={<ShieldCheck size={14} className="mr-1 inline" />} ready={ready}>
           {ready && stats!.topBlockedDomains.length > 0 ? (
             <div className="space-y-1">
               {stats!.topBlockedDomains.slice(0, 10).map((d, i) => (
@@ -144,11 +146,11 @@ export function StatsPanel({ onRefreshNeeded, queryTypeDistribution }: {
                 </div>
               ))}
             </div>
-          ) : <span className="text-xs" style={{ color: 'var(--c-text-secondary)' }}>{ready ? '暂无屏蔽记录' : ''}</span>}
+          ) : <span className="text-xs" style={{ color: 'var(--c-text-secondary)' }}>{ready ? t('stats.noBlockData') : ''}</span>}
         </Card>
 
         {/* 上游服务响应 */}
-        <Card title="上游服务响应" icon={<span className="h-2 w-2 rounded-full mr-1 inline-block" style={{ background: 'var(--c-accent)' }} />} ready={ready}>
+        <Card title={t('stats.upstreamResp')} icon={<span className="h-2 w-2 rounded-full mr-1 inline-block" style={{ background: 'var(--c-accent)' }} />} ready={ready}>
           <div className="space-y-1">
             {ready && stats!.topUpstreams.length > 0 ? stats!.topUpstreams.map(u => (
               <div key={u.upstream} className="flex items-center gap-2 text-xs">

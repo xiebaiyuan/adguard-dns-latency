@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import type { DomainStats } from '../lib/types'
+import { useI18n } from '../lib/i18n'
 
 interface Bin {
   range: string
@@ -39,6 +40,7 @@ interface LatencyChartProps {
 }
 
 export function LatencyChart({ domains }: LatencyChartProps) {
+  const { t } = useI18n()
   const data = useMemo(() => computeHistogram(domains), [domains])
   const total = data.reduce((s, d) => s + d.count, 0)
   // 快于 200ms 的域名（前 3 个 bin）
@@ -73,7 +75,7 @@ export function LatencyChart({ domains }: LatencyChartProps) {
         <div className="h-3 w-1 rounded-full" style={{ background: 'var(--c-accent)' }} />
         <h3 className="text-sm font-semibold" style={{ textWrap: 'balance' }}>域名延时分布</h3>
         <span className="text-xs" style={{ color: 'var(--c-text-secondary)' }}>
-          {total} 个域名 · {fastPct}% &lt;200ms
+          {total} {t('domain.count')} · {fastPct}% {t('trend.fast')}
         </span>
       </div>
       <div className="h-48 sm:h-52">

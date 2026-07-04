@@ -29,9 +29,9 @@ describe('fmtPreciseMs', () => {
 describe('TIME_OPTIONS', () => {
   it('should have correct time options', () => {
     expect(TIME_OPTIONS).toHaveLength(3)
-    expect(TIME_OPTIONS[0]).toEqual({ label: '最近 24h', value: 24 })
-    expect(TIME_OPTIONS[1]).toEqual({ label: '最近 7 天', value: 168 })
-    expect(TIME_OPTIONS[2]).toEqual({ label: '最近 30 天', value: 720 })
+    expect(TIME_OPTIONS[0]).toEqual({ label: '24h', value: 24 })
+    expect(TIME_OPTIONS[1]).toEqual({ label: '7d', value: 168 })
+    expect(TIME_OPTIONS[2]).toEqual({ label: '30d', value: 720 })
   })
 })
 

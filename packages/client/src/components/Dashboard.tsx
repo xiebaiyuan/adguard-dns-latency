@@ -2,6 +2,7 @@ import { FileCsv, ArrowClockwise, Gear, ShieldCheck, Prohibit, Trash, Sliders } 
 import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { useAnalysis } from '../hooks/useAnalysis'
 import { useAdguard } from '../hooks/useAdguard'
+import { useI18n } from '../lib/i18n'
 import { KpiCards } from './KpiCards'
 import { DomainTable } from './DomainTable'
 import { StatsPanel } from './StatsPanel'
@@ -20,6 +21,7 @@ function getPanelVisible(key: string, def: boolean): boolean {
 }
 
 export function Dashboard() {
+  const { t } = useI18n()
   const { loading, error, data, refresh, refreshing } = useAnalysis()
   const adguard = useAdguard()
   const [showSettings, setShowSettings] = useState(false)
@@ -93,7 +95,7 @@ export function Dashboard() {
         <div className="flex items-center gap-2">
           <div className="flex h-2 w-2 rounded-full" style={{ background: data?.ready ? 'var(--c-success)' : 'var(--c-text-secondary)' }} />
           <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--c-text)' }}>
-            {data?.ready ? '分析就绪' : '等待数据'}
+            {data?.ready ? t('status.ready') : t('status.waiting')}
           </span>
           {data?.adguardUrl && (
             <span className="hidden text-xs sm:inline" style={{ color: 'var(--c-text-secondary)' }}>
@@ -102,7 +104,7 @@ export function Dashboard() {
           )}
           {data?.lastUpdated && (
             <span className="text-xs" style={{ color: 'var(--c-text-secondary)' }}>
-              · 更新于 {new Date(data.lastUpdated).toLocaleTimeString()}
+              · {t('status.updated')} {new Date(data.lastUpdated).toLocaleTimeString()}
             </span>
           )}
         </div>
@@ -145,10 +147,10 @@ export function Dashboard() {
                   }}
                 >
                   {prot ? <ShieldCheck size={12} /> : <Prohibit size={12} />}
-                  {prot ? '保护中' : '已暂停'}
+                  {prot ? t('status.protected') : t('status.paused')}
                 </button>
               )
-            })() : <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--c-text-secondary)' }}>保护...</span>}
+            })() : <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: 'var(--c-text-secondary)' }}>{t('status.protecting')}</span>}
           </div>
           {/* Clear cache */}
           <button
@@ -156,7 +158,7 @@ export function Dashboard() {
             disabled={adguard.saving === 'cache'}
             className="glass-card inline-flex cursor-pointer items-center justify-center rounded-lg p-1.5 press-effect disabled:opacity-40"
             style={{ color: 'var(--c-text-secondary)' }}
-            title="清除 DNS 缓存"
+            title={t('btn.clearCache')}
           >
             <Trash size={14} />
           </button>
@@ -165,7 +167,7 @@ export function Dashboard() {
             onClick={() => setShowManagement(true)}
             className="glass-card inline-flex cursor-pointer items-center justify-center rounded-lg p-1.5 press-effect"
             style={{ color: 'var(--c-text-secondary)' }}
-            title="AdGuardHome 管理（规则/安全/维护）"
+            title={t('btn.manage')}
           >
             <Sliders size={14} />
           </button>
@@ -173,7 +175,7 @@ export function Dashboard() {
             onClick={() => setShowSettings(true)}
             className="glass-card inline-flex cursor-pointer items-center justify-center rounded-lg p-1.5 press-effect"
             style={{ color: 'var(--c-text-secondary)' }}
-            title="配置 AdGuardHome 连接"
+            title={t('btn.config')}
           >
             <Gear size={16} />
           </button>
@@ -182,7 +184,7 @@ export function Dashboard() {
             disabled={!domains.length}
             className="glass-card inline-flex cursor-pointer items-center justify-center rounded-lg p-1.5 press-effect disabled:opacity-40"
             style={{ color: 'var(--c-text-secondary)' }}
-            title="导出 CSV"
+            title={t('btn.export')}
           >
             <FileCsv size={14} />
           </button>
@@ -192,7 +194,7 @@ export function Dashboard() {
             disabled={refreshing}
             className="glass-card inline-flex cursor-pointer items-center justify-center rounded-lg p-1.5 press-effect disabled:opacity-40"
             style={{ color: 'var(--c-accent)' }}
-            title="刷新分析数据"
+            title={t('btn.refresh')}
           >
             <ArrowClockwise size={14} className={refreshing ? 'animate-spin' : ''} />
           </button>
@@ -202,7 +204,7 @@ export function Dashboard() {
       {/* KPI Cards — 数据来自后端预聚合 */}
       <div className="mb-6">
         <div className="mb-3 flex items-center gap-2">
-          <span className="text-sm font-semibold" style={{ color: 'var(--c-text)', textWrap: 'balance' }}>分析概览</span>
+          <span className="text-sm font-semibold" style={{ color: 'var(--c-text)', textWrap: 'balance' }}>{t('section.overview')}</span>
           {data?.timeRange?.start && (
             <div className="relative" ref={timePickerRef}>
               <button
@@ -211,9 +213,9 @@ export function Dashboard() {
                 style={{ background: 'oklch(0.55 0.18 150 / 0.1)', color: 'var(--c-success)' }}
               >
                 {(() => {
-                  if (currentTimeHours >= 720) return '最近 30 天'
-                  if (currentTimeHours >= 168) return '最近 7 天'
-                  return '最近 24h'
+                  if (currentTimeHours >= 720) return t('time.recent30d')
+                  if (currentTimeHours >= 168) return t('time.recent7d')
+                  return t('time.recent24h')
                 })()}
               </button>
               {showTimePicker && (
@@ -251,7 +253,7 @@ export function Dashboard() {
 
       {/* Stats Panel (实时统计数据来自 AdGuardHome) */}
       {showStatsPanel && (
-        <CollapseSection title="实时统计" storageKey="collapse_stats" defaultOpen badge={
+        <CollapseSection title={t('section.stats')} storageKey="collapse_stats" defaultOpen badge={
           <span className="rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider"
             style={{ background: 'var(--c-accent-soft)', color: 'var(--c-accent)' }}>
             AdGuardHome
@@ -262,7 +264,7 @@ export function Dashboard() {
       )}
 
       {/* Latency Chart — lazy 加载 */}
-      <CollapseSection title="域名延时分布" storageKey="collapse_latency">
+      <CollapseSection title={t('section.latency')} storageKey="collapse_latency">
         <div className={domains.length > 0 ? 'mb-6 fade-in-content' : 'mb-6 shimmer-bg rounded-xl p-4'} style={{ minHeight: '200px' }}>
           <Suspense fallback={<div className="glass-card rounded-xl p-4 sm:p-6">
             <div className="mb-4 h-4 w-32 rounded" style={{ background: 'var(--c-border)' }} />
@@ -274,7 +276,7 @@ export function Dashboard() {
       </CollapseSection>
 
       {/* Domain Table */}
-      <CollapseSection title="域名延时排行" storageKey="collapse_domains">
+      <CollapseSection title={t('section.domainRank')} storageKey="collapse_domains">
         <div className={domains.length > 0 ? 'fade-in-content' : 'shimmer-bg rounded-xl p-4'}>
           <DomainTable domains={domains} />
         </div>
