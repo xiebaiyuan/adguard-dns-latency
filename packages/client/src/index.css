@@ -33,7 +33,7 @@
   --c-bg: oklch(0.12 0.01 260);
   --c-bg-elevated: oklch(0.16 0.01 260);
   --c-glass: oklch(0.2 0.015 260 / 0.65);
-  --c-glass-border: oklch(1 1 1 / 0.08);
+  --c-glass-border: oklch(1 0 0 / 0.08);
   --c-text: oklch(0.92 0.005 260);
   --c-text-secondary: oklch(0.55 0.015 260);
   --c-border: oklch(0.24 0.01 260);
@@ -69,6 +69,7 @@ body {
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--c-glass-border);
   box-shadow: var(--c-glass-shadow);
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 /* ── 按下反馈 ── */
@@ -119,15 +120,19 @@ textarea:focus-visible {
 /* ── KPI card gradient accent ── */
 .kpi-gradient-1 {
   background: linear-gradient(135deg, oklch(0.55 0.22 260 / 0.08), oklch(0.55 0.22 260 / 0.02));
+  transition: background 0.3s ease;
 }
 .kpi-gradient-2 {
   background: linear-gradient(135deg, oklch(0.55 0.18 150 / 0.08), oklch(0.55 0.18 150 / 0.02));
+  transition: background 0.3s ease;
 }
 .kpi-gradient-3 {
   background: linear-gradient(135deg, oklch(0.68 0.16 75 / 0.08), oklch(0.68 0.16 75 / 0.02));
+  transition: background 0.3s ease;
 }
 .kpi-gradient-4 {
   background: linear-gradient(135deg, oklch(0.58 0.22 27 / 0.08), oklch(0.58 0.22 27 / 0.02));
+  transition: background 0.3s ease;
 }
 
 /* ── Type dot indicator ── */

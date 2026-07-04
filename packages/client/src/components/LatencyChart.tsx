@@ -7,52 +7,31 @@ interface Bin {
   count: number
 }
 
-// Use a fixed histogram assumption based on overall P50/P95 spread
 function computeHistogram(domains: DomainStats[]): Bin[] {
   if (!domains.length) return []
-
-  // 单次遍历：根据 P95 看落在哪个区间，直接计数
   const thresholds = [10, 50, 200, 500, 1000]
   const labels = ['<10ms', '10-50', '50-200', '200-500', '500-1s', '>1s']
   const counts = new Array(labels.length).fill(0)
-
   for (const d of domains) {
     const p95 = d.uncached.p95
-    let bin = thresholds.length // 默认 >1s
+    let bin = thresholds.length
     for (let t = 0; t < thresholds.length; t++) {
-      if (p95 < thresholds[t]) {
-        bin = t
-        break
-      }
+      if (p95 < thresholds[t]) { bin = t; break }
     }
     counts[bin]++
   }
-
   return labels.map((range, i) => ({ range, count: counts[i] }))
 }
 
-const GRADIENT_COLORS = [
-  'oklch(0.55 0.22 260 / 0.6)',
-  'oklch(0.55 0.22 260 / 0.7)',
-  'oklch(0.55 0.22 260 / 0.8)',
-  'oklch(0.68 0.16 75 / 0.8)',
-  'oklch(0.58 0.22 27 / 0.7)',
-  'oklch(0.58 0.22 27 / 0.85)',
+/** 绿 → 黄 → 红 热力色阶 */
+const HEAT_COLORS = [
+  'oklch(0.55 0.18 150 / 0.85)',   // <10ms  — green
+  'oklch(0.62 0.15 155 / 0.8)',    // 10-50   — teal/green
+  'oklch(0.55 0.22 260 / 0.75)',   // 50-200  — blue
+  'oklch(0.68 0.16 75 / 0.8)',     // 200-500 — amber
+  'oklch(0.65 0.2 50 / 0.8)',      // 500-1s  — orange
+  'oklch(0.58 0.22 27 / 0.85)',    // >1s     — red
 ]
-
-function ChartTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null
-  return (
-    <div className="glass-card rounded-lg px-3 py-2 text-xs shadow-lg">
-      <div className="mb-1 font-medium" style={{ color: 'var(--c-text)' }}>{label}</div>
-      {payload.map((p: any, i: number) => (
-        <div key={i} style={{ color: p.color }}>
-          {p.name}: {p.value.toLocaleString()} 个域名
-        </div>
-      ))}
-    </div>
-  )
-}
 
 interface LatencyChartProps {
   domains: DomainStats[]
@@ -61,35 +40,45 @@ interface LatencyChartProps {
 
 export function LatencyChart({ domains }: LatencyChartProps) {
   const data = useMemo(() => computeHistogram(domains), [domains])
+  const total = data.reduce((s, d) => s + d.count, 0)
+  // 快于 200ms 的域名（前 3 个 bin）
+  const fastCount = data.length >= 3 ? data[0].count + data[1].count + data[2].count : 0
+  const fastPct = total > 0 ? Math.round((fastCount / total) * 100) : 0
 
   if (!domains.length) {
     return (
-      <div
-        className="glass-card flex items-center justify-center rounded-xl py-12"
-      >
+      <div className="glass-card flex items-center justify-center rounded-xl py-12">
         <span className="text-sm" style={{ color: 'var(--c-text-secondary)' }}>暂无数据</span>
+      </div>
+    )
+  }
+
+  const ChartTooltip = ({ active, payload, label }: any) => {
+    if (!active || !payload?.length) return null
+    const count = payload[0].value as number
+    const pct = total > 0 ? ((count / total) * 100).toFixed(1) : '0'
+    return (
+      <div className="glass-card rounded-lg px-3 py-2 text-xs shadow-lg">
+        <div className="mb-0.5 font-medium" style={{ color: 'var(--c-text)' }}>{label}</div>
+        <div style={{ color: 'var(--c-text-secondary)' }}>
+          {count.toLocaleString()} 个域名 · 占比 {pct}%
+        </div>
       </div>
     )
   }
 
   return (
     <div className="glass-card rounded-xl p-4 sm:p-6">
-      <div className="mb-4 flex items-center gap-2">
+      <div className="mb-3 flex items-center gap-2">
         <div className="h-3 w-1 rounded-full" style={{ background: 'var(--c-accent)' }} />
         <h3 className="text-sm font-semibold" style={{ textWrap: 'balance' }}>域名延时分布</h3>
         <span className="text-xs" style={{ color: 'var(--c-text-secondary)' }}>
-          按 P95 延时区间
+          {total} 个域名 · {fastPct}% &lt;200ms
         </span>
       </div>
       <div className="h-48 sm:h-52">
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: -16 }}>
-            <defs>
-              <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--c-accent)" stopOpacity={0.85} />
-                <stop offset="100%" stopColor="var(--c-accent)" stopOpacity={0.45} />
-              </linearGradient>
-            </defs>
+          <BarChart data={data} margin={{ top: 16, right: 8, bottom: 0, left: -16 }}>
             <XAxis
               dataKey="range"
               tick={{ fontSize: 11, fill: 'var(--c-text-secondary)' }}
@@ -103,9 +92,13 @@ export function LatencyChart({ domains }: LatencyChartProps) {
               allowDecimals={false}
             />
             <Tooltip content={<ChartTooltip />} cursor={{ fill: 'var(--c-border)', opacity: 0.3 }} />
-            <Bar dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={56} isAnimationActive={false}>
+            <Bar
+              dataKey="count" radius={[6, 6, 0, 0]} maxBarSize={56}
+              isAnimationActive={true} animationDuration={500}
+              label={{ position: 'top', fontSize: 10, fill: 'var(--c-text-secondary)', fontWeight: 500 }}
+            >
               {data.map((_, index) => (
-                <Cell key={index} fill={GRADIENT_COLORS[index % GRADIENT_COLORS.length]} />
+                <Cell key={index} fill={HEAT_COLORS[index % HEAT_COLORS.length]} />
               ))}
             </Bar>
           </BarChart>

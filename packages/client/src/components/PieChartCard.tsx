@@ -9,6 +9,22 @@ const COLORS = [
   'oklch(0.68 0.16 75 / 0.5)',
 ]
 
+/** 环图中心总数标签 */
+function CenterLabel({ total }: { total: number }) {
+  return (
+    <>
+      <text x="50%" y="48%" textAnchor="middle" dominantBaseline="middle"
+        style={{ fontSize: 13, fontWeight: 600, fill: 'var(--c-text)', fontVariantNumeric: 'tabular-nums' }}>
+        {total.toLocaleString()}
+      </text>
+      <text x="50%" y="64%" textAnchor="middle" dominantBaseline="middle"
+        style={{ fontSize: 9, fill: 'var(--c-text-secondary)' }}>
+        总计
+      </text>
+    </>
+  )
+}
+
 export function PieChartCard({ data, suffix }: {
   data: Array<{ name: string; value: number }>
   suffix?: string
@@ -25,6 +41,7 @@ export function PieChartCard({ data, suffix }: {
       <div className="h-28 w-28 shrink-0">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
+            {hasData && <CenterLabel total={total} />}
             <Pie
               data={hasData ? data.slice(0, 6) : [{ name: '', value: 1 }]}
               dataKey="value"
@@ -35,7 +52,7 @@ export function PieChartCard({ data, suffix }: {
               outerRadius={42}
               paddingAngle={2}
               fill={hasData ? undefined : 'var(--c-border)'}
-              isAnimationActive={false}
+              isAnimationActive={true} animationDuration={400}
             >
               {hasData && data.slice(0, 6).map((_, i) => (
                 <Cell key={i} fill={COLORS[i % COLORS.length]} />
